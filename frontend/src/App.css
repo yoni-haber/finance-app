@@ -1,0 +1,173 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 100vw;
+  overflow-x: hidden;
+  background-color: #f8f9fa;
+}
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+  color: #2d3748;
+  width: 100%;
+}
+
+.section-wrapper {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.section-card {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.section-card h2 {
+  margin-bottom: 1rem;
+  color: #2d3748;
+  font-size: 1.5rem;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.budget-tracking {
+  background: transparent;
+  padding: 0;
+}
+
+.budget-tracking h2 {
+  display: none;
+}
+
+.budget-card {
+  background: #f7fafc;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+}
+
+.budget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.budget-header h3 {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.budget-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.budget-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.budget-stat-label {
+  color: #718096;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.budget-stat-value {
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.budget-stat-value.negative {
+  color: #f56565;
+}
+
+.budget-stat-value.positive {
+  color: #48bb78;
+}
+
+.error-message {
+  color: #f56565;
+  padding: 1rem;
+  background-color: #fff5f5;
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
+}
+
+.success-message {
+  color: #48bb78;
+  padding: 1rem;
+  background-color: #f0fff4;
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
+}
+
+.loading {
+  text-align: center;
+  color: #718096;
+  padding: 1rem;
+}
+
+.no-data {
+  text-align: center;
+  color: #718096;
+  padding: 1rem;
+  background-color: #f7fafc;
+  border-radius: 0.375rem;
+}
+
+/* List Styling */
+.item-list {
+  background: #fff;
+  color: #1a202c;
+  border-radius: 6px;
+  padding: 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.item-list li {
+  padding: 0.5rem 0;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .section-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .app-container {
+    padding: 1rem;
+  }
+}
+
+/** Remove default margins - allows full height and width */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
