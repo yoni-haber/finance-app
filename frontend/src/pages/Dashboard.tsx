@@ -100,7 +100,7 @@ const Dashboard = () => {
             </Paper>
           </Grid>
           <Grid item xs={12}>
-            <IncomeList onIncomeChange={handleIncomeChange} />
+            <IncomeList onIncomeChange={handleIncomeChange} year={0} month={0} />
           </Grid>
         </Grid>
       </Box>

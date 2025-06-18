@@ -15,6 +15,7 @@
  *    - category: Selected category from enum
  *    - error: Error state for error handling
  *    - loading: Loading state indicator
+ *    - date: Budget date
  *
  * 2. Main Functions:
  *    - handleSubmit: Handles form submission and API call
@@ -26,21 +27,35 @@
  *    - Error message display
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Paper, Typography, TextField, Button, Box, MenuItem } from '@mui/material';
 import api from '../api/financeApi';
 import { Category } from '../types/category';
 
 interface BudgetFormProps {
-  onBudgetAdded?: () => void; // Callback function when budget is successfully added
+  onBudgetAdded: () => void;
+  year: number;
+  month: number;
 }
 
-export default function BudgetForm({ onBudgetAdded }: BudgetFormProps) {
+export default function BudgetForm({ onBudgetAdded, year, month }: BudgetFormProps) {
   // Form state management
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<Category>(Category.OTHER);
+  const [date, setDate] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Set default date when year/month changes, but only if the user hasn't entered a date
+  const didSetDefault = useRef(false);
+  useEffect(() => {
+    if (!date && !didSetDefault.current) {
+      setDate(`${year}-${String(month + 1).padStart(2, '0')}-01`);
+      didSetDefault.current = true;
+    }
+    // Reset flag if year/month changes and date is cleared
+    if (!date) didSetDefault.current = false;
+  }, [year, month]);
 
   /**
    * Handle form submission
@@ -57,22 +72,15 @@ export default function BudgetForm({ onBudgetAdded }: BudgetFormProps) {
     setLoading(true);
 
     try {
-      // Get current date and format it as YYYY-MM-DD
-      const today = new Date();
+      // Use the selected year/month for the budget date
       const budget = {
         amount: Number(amount),
         category: category,
-        date: today.toISOString().split('T')[0], // Format: YYYY-MM-DD
+        date: date,
       };
-
-      // Submit budget data to API
       await api.post('/budget', budget);
-
-      // Clear form fields after successful submission
       setAmount('');
       setCategory(Category.OTHER);
-
-      // Notify parent component if callback provided
       if (onBudgetAdded) {
         onBudgetAdded();
       }
@@ -115,6 +123,15 @@ export default function BudgetForm({ onBudgetAdded }: BudgetFormProps) {
               </MenuItem>
             ))}
           </TextField>
+
+          {/* Date input field */}
+          <TextField
+            label="Date"
+            type="date"
+            value={date}
+            onChange={e => setDate(e.target.value)}
+            required
+          />
 
           {/* Error message display */}
           {error && (

@@ -28,21 +28,34 @@
  *    - Error message display
  */
 
-import { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Paper, Typography, TextField, Button, Box } from '@mui/material';
 import api from '../api/financeApi';
 
 interface IncomeFormProps {
-  onIncomeAdded?: () => void; // Callback function when income is successfully added
+  onIncomeAdded: () => void;
+  year: number;
+  month: number;
 }
 
-export default function IncomeForm({ onIncomeAdded }: IncomeFormProps) {
+const IncomeForm: React.FC<IncomeFormProps> = ({ onIncomeAdded, year, month }) => {
   // Form state management
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Set default date when year/month changes, but only if the user hasn't entered a date
+  const didSetDefault = useRef(false);
+  useEffect(() => {
+    if (!date && !didSetDefault.current) {
+      setDate(`${year}-${String(month + 1).padStart(2, '0')}-01`);
+      didSetDefault.current = true;
+    }
+    // Reset flag if year/month changes and date is cleared
+    if (!date) didSetDefault.current = false;
+  }, [year, month]);
 
   /**
    * Handle form submission
@@ -58,19 +71,20 @@ export default function IncomeForm({ onIncomeAdded }: IncomeFormProps) {
     setLoading(true);
 
     try {
-      // Submit income data to API
+      // Use the selected year/month if date is not provided
+      let submitDate = date;
+      if (!submitDate) {
+        // Default to first day of selected month/year
+        submitDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+      }
       await api.post('/income', {
-        date,
+        date: submitDate,
         description,
         amount: parseFloat(amount),
       });
-
-      // Clear form fields after successful submission
       setDate('');
       setDescription('');
       setAmount('');
-
-      // Notify parent component if callback provided
       if (onIncomeAdded) {
         onIncomeAdded();
       }
@@ -132,4 +146,6 @@ export default function IncomeForm({ onIncomeAdded }: IncomeFormProps) {
       </form>
     </Paper>
   );
-}
+};
+
+export default IncomeForm;

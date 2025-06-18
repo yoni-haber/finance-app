@@ -31,16 +31,18 @@
  *    - Error message display
  */
 
-import { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Paper, Typography, TextField, Button, Box, MenuItem } from '@mui/material';
 import api from '../api/financeApi';
 import { Category } from '../types/category';
 
 interface ExpenditureFormProps {
-  onExpenditureAdded?: () => void; // Callback function when expenditure is successfully added
+  onExpenditureAdded: () => void;
+  year: number;
+  month: number;
 }
 
-export default function ExpenditureForm({ onExpenditureAdded }: ExpenditureFormProps) {
+const ExpenditureForm: React.FC<ExpenditureFormProps> = ({ onExpenditureAdded, year, month }) => {
   // Form state management
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
@@ -48,6 +50,17 @@ export default function ExpenditureForm({ onExpenditureAdded }: ExpenditureFormP
   const [category, setCategory] = useState<Category>(Category.OTHER);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Set default date when year/month changes, but only if the user hasn't entered a date
+  const didSetDefault = useRef(false);
+  useEffect(() => {
+    if (!date && !didSetDefault.current) {
+      setDate(`${year}-${String(month + 1).padStart(2, '0')}-01`);
+      didSetDefault.current = true;
+    }
+    // Reset flag if year/month changes and date is cleared
+    if (!date) didSetDefault.current = false;
+  }, [year, month]);
 
   /**
    * Handle form submission
@@ -63,21 +76,22 @@ export default function ExpenditureForm({ onExpenditureAdded }: ExpenditureFormP
     setLoading(true);
 
     try {
-      // Submit expenditure data to API
+      // Use the selected year/month if date is not provided
+      let submitDate = date;
+      if (!submitDate) {
+        // Default to first day of selected month/year
+        submitDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+      }
       await api.post('/expenditure', {
-        date,
+        date: submitDate,
         description,
         amount: parseFloat(amount),
         category,
       });
-
-      // Clear form fields after successful submission
       setDate('');
       setDescription('');
       setAmount('');
       setCategory(Category.OTHER);
-
-      // Notify parent component if callback provided
       if (onExpenditureAdded) {
         onExpenditureAdded();
       }
@@ -154,4 +168,6 @@ export default function ExpenditureForm({ onExpenditureAdded }: ExpenditureFormP
       </form>
     </Paper>
   );
-}
+};
+
+export default ExpenditureForm;

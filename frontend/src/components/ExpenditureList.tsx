@@ -33,7 +33,7 @@
  *    - Total expenditure display
  */
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Paper,
   Typography,
@@ -58,9 +58,11 @@ import { Category } from '../types/category';
 
 interface ExpenditureListProps {
   refreshTrigger?: number;
+  year: number;
+  month: number;
 }
 
-export default function ExpenditureList({ refreshTrigger = 0 }: ExpenditureListProps) {
+const ExpenditureList: React.FC<ExpenditureListProps> = ({ refreshTrigger, year, month }) => {
   const [expenditures, setExpenditures] = useState<Expenditure[]>([]);
   const [totalExpenditure, setTotalExpenditure] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -74,19 +76,16 @@ export default function ExpenditureList({ refreshTrigger = 0 }: ExpenditureListP
     category: '',
   });
 
+  const monthName = new Date(year, month).toLocaleString('default', { month: 'long' });
+
   const fetchExpenditures = async () => {
     setLoading(true);
     setError(null);
     try {
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth() + 1;
-
       const [expendituresRes, totalRes] = await Promise.all([
-        api.get(`/expenditure?year=${year}&month=${month}`),
-        api.get(`/expenditure/total?year=${year}&month=${month}`),
+        api.get(`/expenditure?year=${year}&month=${month + 1}`),
+        api.get(`/expenditure/total?year=${year}&month=${month + 1}`),
       ]);
-
       setExpenditures(expendituresRes.data);
       setTotalExpenditure(totalRes.data);
     } catch (error) {
@@ -99,7 +98,7 @@ export default function ExpenditureList({ refreshTrigger = 0 }: ExpenditureListP
 
   useEffect(() => {
     fetchExpenditures();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, year, month]);
 
   const handleDelete = async (id: number | undefined) => {
     try {
@@ -174,7 +173,7 @@ export default function ExpenditureList({ refreshTrigger = 0 }: ExpenditureListP
     <>
       <Paper sx={{ p: 3, mt: 2 }}>
         <Typography variant="h6" gutterBottom>
-          Expenses This Month
+          {`Expenses in ${monthName}`}
         </Typography>
         <List>
           {expenditures.map(expenditure => (
@@ -200,8 +199,8 @@ export default function ExpenditureList({ refreshTrigger = 0 }: ExpenditureListP
               }
             >
               <ListItemText
-                primary={`${expenditure.date} - ${expenditure.description}`}
-                secondary={`£${expenditure.amount.toFixed(2)} - ${expenditure.category}`}
+                primary={`£${expenditure.amount.toFixed(2)} - ${expenditure.description}`}
+                secondary={`${expenditure.category}, ${expenditure.date}`}
               />
             </ListItem>
           ))}
@@ -263,4 +262,6 @@ export default function ExpenditureList({ refreshTrigger = 0 }: ExpenditureListP
       </Dialog>
     </>
   );
-}
+};
+
+export default ExpenditureList;

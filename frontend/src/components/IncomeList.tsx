@@ -56,10 +56,17 @@ import type { Income } from '../types/finance';
 
 interface IncomeListProps {
   refreshTrigger?: number;
+  year: number;
+  month: number;
   onIncomeChange?: () => void;
 }
 
-export default function IncomeList({ refreshTrigger = 0, onIncomeChange }: IncomeListProps) {
+export default function IncomeList({
+  refreshTrigger = 0,
+  year,
+  month,
+  onIncomeChange,
+}: IncomeListProps) {
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [totalIncome, setTotalIncome] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,19 +79,16 @@ export default function IncomeList({ refreshTrigger = 0, onIncomeChange }: Incom
     amount: '',
   });
 
+  const monthName = new Date(year, month).toLocaleString('default', { month: 'long' });
+
   const fetchIncomes = async () => {
     setLoading(true);
     setError(null);
     try {
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth() + 1;
-
       const [incomesRes, totalRes] = await Promise.all([
-        api.get(`/income?year=${year}&month=${month}`),
-        api.get(`/income/total?year=${year}&month=${month}`),
+        api.get(`/income?year=${year}&month=${month + 1}`),
+        api.get(`/income/total?year=${year}&month=${month + 1}`),
       ]);
-
       setIncomes(incomesRes.data);
       setTotalIncome(totalRes.data);
     } catch (error) {
@@ -97,7 +101,7 @@ export default function IncomeList({ refreshTrigger = 0, onIncomeChange }: Incom
 
   useEffect(() => {
     fetchIncomes();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, year, month]);
 
   const handleDelete = async (id: number | undefined) => {
     try {
@@ -171,7 +175,7 @@ export default function IncomeList({ refreshTrigger = 0, onIncomeChange }: Incom
     <>
       <Paper sx={{ p: 3, mt: 2 }}>
         <Typography variant="h6" gutterBottom>
-          Income This Month
+          {`Income in ${monthName}`}
         </Typography>
         <List>
           {incomes.map(income => (
@@ -197,8 +201,8 @@ export default function IncomeList({ refreshTrigger = 0, onIncomeChange }: Incom
               }
             >
               <ListItemText
-                primary={`${income.date} - ${income.description}`}
-                secondary={`£${income.amount.toFixed(2)}`}
+                primary={`£${income.amount.toFixed(2)} - ${income.description}`}
+                secondary={income.date}
               />
             </ListItem>
           ))}

@@ -32,7 +32,7 @@
  *    - Total budget display
  */
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Paper,
   Typography,
@@ -57,9 +57,11 @@ import { Category } from '../types/category';
 
 interface BudgetListProps {
   refreshTrigger?: number;
+  year: number;
+  month: number;
 }
 
-export default function BudgetList({ refreshTrigger = 0 }: BudgetListProps) {
+const BudgetList: React.FC<BudgetListProps> = ({ refreshTrigger, year, month }) => {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,10 +76,7 @@ export default function BudgetList({ refreshTrigger = 0 }: BudgetListProps) {
     setLoading(true);
     setError(null);
     try {
-      const today = new Date();
-      const response = await api.get(
-        `/budget?year=${today.getFullYear()}&month=${today.getMonth() + 1}`
-      );
+      const response = await api.get(`/budget?year=${year}&month=${month + 1}`);
       setBudgets(response.data);
     } catch (error) {
       console.error('Error fetching budgets:', error);
@@ -89,7 +88,7 @@ export default function BudgetList({ refreshTrigger = 0 }: BudgetListProps) {
 
   useEffect(() => {
     fetchBudgets();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, year, month]);
 
   const handleDelete = async (id: number | undefined) => {
     try {
@@ -155,12 +154,13 @@ export default function BudgetList({ refreshTrigger = 0 }: BudgetListProps) {
   }
 
   const totalBudget = budgets.reduce((sum, budget) => sum + budget.amount, 0);
+  const monthName = new Date(year, month).toLocaleString('default', { month: 'long' });
 
   return (
     <>
       <Paper sx={{ p: 3, mt: 2 }}>
         <Typography variant="h6" gutterBottom>
-          Budgets This Month
+          {`Budgets in ${monthName}`}
         </Typography>
         <List>
           {budgets.map(budget => (
@@ -232,4 +232,6 @@ export default function BudgetList({ refreshTrigger = 0 }: BudgetListProps) {
       </Dialog>
     </>
   );
-}
+};
+
+export default BudgetList;

@@ -33,6 +33,7 @@ import {
 } from 'recharts';
 import type { DashboardSummary } from '../types/dashboard';
 import axios from 'axios';
+import { useDate } from '../context/DateContext';
 
 /**
  * Dashboard Component
@@ -47,42 +48,30 @@ import axios from 'axios';
 const Dashboard = () => {
   // Navigation and location hooks for routing and URL parameters
   const navigate = useNavigate();
-  const location = useLocation();
+  useLocation();
+  // Use global date context
+  const { year, month, setYearMonth } = useDate();
 
-  // Parse query parameters for year/month, fallback to current date
-  const params = new URLSearchParams(location.search);
-  const initialYear = params.get('year') ? Number(params.get('year')) : new Date().getFullYear();
-  const initialMonth = params.get('month')
-    ? Number(params.get('month')) - 1
-    : new Date().getMonth();
-
-  // State management for dashboard summary and current date
+  // State management for dashboard summary
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [currentDate, setCurrentDate] = useState(new Date(initialYear, initialMonth, 1));
 
   // Dialog state for month/year selection
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(initialMonth);
-  const [selectedYear, setSelectedYear] = useState(initialYear);
+  const [selectedMonth, setSelectedMonth] = useState(month);
+  const [selectedYear, setSelectedYear] = useState(year);
 
   /**
    * Fetch dashboard data from several API endpoints
-   * Updates whenever currentDate changes
+   * Updates whenever year/month changes
    */
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         // Fetch data from multiple endpoints in parallel
         const [incomeResponse, expensesResponse, budgetResponse] = await Promise.all([
-          axios.get(
-            `/api/income/total?year=${currentDate.getFullYear()}&month=${currentDate.getMonth() + 1}`
-          ),
-          axios.get(
-            `/api/expenditure/total?year=${currentDate.getFullYear()}&month=${currentDate.getMonth() + 1}`
-          ),
-          axios.get(
-            `/api/budget-tracking?year=${currentDate.getFullYear()}&month=${currentDate.getMonth() + 1}`
-          ),
+          axios.get(`/api/income/total?year=${year}&month=${month + 1}`),
+          axios.get(`/api/expenditure/total?year=${year}&month=${month + 1}`),
+          axios.get(`/api/budget-tracking?year=${year}&month=${month + 1}`),
         ]);
 
         // Transform budget data for chart display
@@ -93,7 +82,7 @@ const Dashboard = () => {
           remaining: Number(item.budget) - Number(item.spent),
           percentageUsed: item.percentageUsed,
         }));
-        
+
         // Update summary state with fetched data
         setSummary({
           totalIncome: Number(incomeResponse.data),
@@ -108,17 +97,19 @@ const Dashboard = () => {
     };
 
     fetchDashboardData();
-  }, [currentDate]);
+  }, [year, month]);
 
   // Dialog handlers for selecting month and year
-  const handleOpenDialog = () => setDialogOpen(true);
+  const handleOpenDialog = () => {
+    setSelectedMonth(month);
+    setSelectedYear(year);
+    setDialogOpen(true);
+  };
   const handleCloseDialog = () => setDialogOpen(false);
 
-  // Apply the selected date and update URL parameters
+  // Apply the selected date and update context
   const handleApplyDate = () => {
-    setCurrentDate(new Date(selectedYear, selectedMonth, 1));
-    // Update URL query parameters for consistency
-    navigate(`?year=${selectedYear}&month=${selectedMonth + 1}`);
+    setYearMonth(selectedYear, selectedMonth);
     setDialogOpen(false);
   };
 
@@ -133,8 +124,7 @@ const Dashboard = () => {
     return <Typography>Loading...</Typography>;
   }
 
-  const month = currentDate.toLocaleString('default', { month: 'long' });
-  const year = currentDate.getFullYear();
+  const monthName = new Date(year, month).toLocaleString('default', { month: 'long' });
 
   return (
     <Box
@@ -158,7 +148,7 @@ const Dashboard = () => {
         >
           <Box display="flex" flexDirection="column" alignItems="center">
             <Typography variant="h3" fontWeight="bold" color="text.primary">
-              {month} {year}
+              {monthName} {year}
             </Typography>
             <Button variant="outlined" sx={{ mt: 2 }} onClick={handleOpenDialog}>
               Change
