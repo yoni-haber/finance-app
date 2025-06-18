@@ -18,7 +18,7 @@ public class WebConfig implements WebMvcConfigurer {
   /**
    * Configures CORS settings for the application. This method: 1. Allows requests from the frontend
    * development server (http://localhost:5173) 2. Allows common HTTP methods (GET, POST, PUT,
-   * DELETE, OPTIONS) 3. Allows all headers 4. Allows credentials (cookies, authorization headers)
+   * DELETE, OPTIONS) 3. Allows all headers 4. Allows credentials (cookies, authorisation headers)
    *
    * @param registry The CORS registry to configure
    */

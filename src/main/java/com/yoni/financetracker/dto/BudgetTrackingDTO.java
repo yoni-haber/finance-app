@@ -7,7 +7,7 @@ import lombok.Data;
 /**
  * Data Transfer Object (DTO) for Budget Tracking data. This class is used to transfer budget
  * tracking information between the backend and frontend, providing a clean interface for displaying
- * budget utilization and spending patterns.
+ * budget utilisation and spending patterns.
  *
  * <p>The @Data annotation from Lombok automatically generates getters, setters, toString, equals,
  * and hashCode methods.

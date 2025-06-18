@@ -7,14 +7,16 @@ import { ThemeProvider } from './context/ThemeContext';
 import './index.css';
 
 // Create the root of the React application
-// This is where the entire app gets mounted to the DOM
+// This is where the entire application is mounted to the DOM (web page)
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  // StrictMode helps identify potential problems in the application
+  // StrictMode is a tool for highlighting potential problems in an application
+  // It does not render any visible UI, but helps with best practices and warnings during development
   <React.StrictMode>
+    {/* ThemeProvider supplies the theme (light or dark) to the whole app */}
     <ThemeProvider>
-      {/* CssBaseline provides consistent baseline styles */}
+      {/* CssBaseline provides a consistent baseline of styles across browsers */}
       <CssBaseline />
-      {/* App is the root component of our application */}
+      {/* App is the root component containing all routes and main logic */}
       <App />
     </ThemeProvider>
   </React.StrictMode>

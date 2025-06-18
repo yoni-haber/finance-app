@@ -7,9 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Represents a standard error response for API exceptions.
- */
+/** Represents a standard error response for API exceptions. */
 @Data
 @Builder
 @NoArgsConstructor

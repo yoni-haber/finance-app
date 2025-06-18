@@ -34,7 +34,7 @@ public class Income {
   private BigDecimal amount;
 
   /**
-   * A description of the income source or purpose. Helps users identify and categorize their income
+   * A description of the income source or purpose. Helps users identify and categorise their income
    * sources.
    */
   private String description;

@@ -1,10 +1,10 @@
 /**
  * BudgetTracking Component
  *
- * This component displays budget utilization tracking with the following features:
+ * This component displays budget utilisation tracking with the following features:
  * - Fetches and displays budget tracking data for the current month
  * - Shows budget vs spent amounts for each category
- * - Visual progress bars for budget utilization
+ * - Visual progress bars for budget utilisation
  * - Handles loading states and error messages
  *
  * Component Structure:
@@ -18,7 +18,7 @@
  *    - formatAmount: Formats currency amounts with error handling
  *
  * 3. UI Components:
- *    - Progress bars for budget utilization
+ *    - Progress bars for budget utilisation
  *    - Loading spinner
  *    - Error message
  *    - Empty state message

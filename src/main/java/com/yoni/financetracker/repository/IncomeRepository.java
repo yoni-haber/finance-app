@@ -17,7 +17,7 @@ import org.springframework.stereotype.Repository;
 public interface IncomeRepository extends JpaRepository<Income, Long> {
   /**
    * Finds all income records within a specified date range. This method is useful for generating
-   * income reports and analyzing income patterns over time.
+   * income reports and analysing income patterns over time.
    *
    * @param dateAfter The start date of the range (inclusive)
    * @param dateBefore The end date of the range (inclusive)

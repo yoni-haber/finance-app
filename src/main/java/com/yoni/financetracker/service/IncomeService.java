@@ -45,7 +45,7 @@ public class IncomeService {
   }
 
   /**
-   * Retrieves all income records for a specific month. @Transactional(readOnly = true) optimizes
+   * Retrieves all income records for a specific month. @Transactional(readOnly = true) optimises
    * the transaction for read-only operations.
    *
    * @param year The year to search in
@@ -60,7 +60,7 @@ public class IncomeService {
   }
 
   /**
-   * Calculates the total income for a specific month. @Transactional(readOnly = true) optimizes the
+   * Calculates the total income for a specific month. @Transactional(readOnly = true) optimises the
    * transaction for read-only operations.
    *
    * @param year The year to calculate for

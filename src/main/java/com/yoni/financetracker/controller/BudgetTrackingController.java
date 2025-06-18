@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * REST Controller for managing budget tracking operations. This controller handles HTTP requests
  * for retrieving budget tracking information, which combines budget and expenditure data to show
- * spending patterns and budget utilization.
+ * spending patterns and budget utilisation.
  *
  * <p>The @Slf4j annotation enables logging functionality. The @RestController annotation marks this
  * class as a REST controller. The @RequestMapping("/api/budget-tracking") annotation specifies the

@@ -46,7 +46,7 @@ public class ExpenditureService {
 
   /**
    * Retrieves all expenditure records for a specific month. @Transactional(readOnly = true)
-   * optimizes the transaction for read-only operations.
+   * optimises the transaction for read-only operations.
    *
    * @param year The year to search in
    * @param month The month to search in (1-12)
@@ -61,7 +61,7 @@ public class ExpenditureService {
 
   /**
    * Calculates the total expenditure for a specific month. @Transactional(readOnly = true)
-   * optimizes the transaction for read-only operations.
+   * optimises the transaction for read-only operations.
    *
    * @param year The year to calculate for
    * @param month The month to calculate for (1-12)

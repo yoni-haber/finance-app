@@ -40,7 +40,7 @@ public class Expenditure {
   private LocalDate date;
 
   /**
-   * The category this expenditure belongs to. Helps in organizing and analyzing spending
+   * The category this expenditure belongs to. Helps in organising and analysing spending
    * patterns. @Enumerated(EnumType.STRING) stores the enum as a string in the database.
    */
   @Enumerated(EnumType.STRING)

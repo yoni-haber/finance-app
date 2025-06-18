@@ -17,7 +17,7 @@ import org.springframework.stereotype.Repository;
 public interface ExpenditureRepository extends JpaRepository<Expenditure, Long> {
   /**
    * Finds all expenditure records within a specified date range. This method is useful for
-   * generating expense reports and analyzing spending patterns over time.
+   * generating expense reports and analysing spending patterns over time.
    *
    * @param startDate The start date of the range (inclusive)
    * @param endDate The end date of the range (inclusive)

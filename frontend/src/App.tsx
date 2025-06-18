@@ -57,8 +57,8 @@ function App() {
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'flex-start',
-              px: { xs: 2, sm: 4, md: 6 }, // Responsive padding
-              py: { xs: 2, sm: 4 }, // Responsive padding
+              px: { xs: 2, sm: 4, md: 6 },
+              py: { xs: 2, sm: 4 },
             }}
           >
             {/* Content wrapper with max width */}

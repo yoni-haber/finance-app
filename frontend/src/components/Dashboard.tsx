@@ -42,21 +42,21 @@ import axios from 'axios';
  * 2. Budget overview chart
  * 3. Month/Year selection
  *
- * The component fetches data from multiple API endpoints and displays them in a responsive layout.
+ * The component fetches data from several API endpoints and displays them in a responsive layout.
  */
 const Dashboard = () => {
   // Navigation and location hooks for routing and URL parameters
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Parse query params for year/month, fallback to current date
+  // Parse query parameters for year/month, fallback to current date
   const params = new URLSearchParams(location.search);
   const initialYear = params.get('year') ? Number(params.get('year')) : new Date().getFullYear();
   const initialMonth = params.get('month')
     ? Number(params.get('month')) - 1
     : new Date().getMonth();
 
-  // State management
+  // State management for dashboard summary and current date
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date(initialYear, initialMonth, 1));
 
@@ -66,8 +66,8 @@ const Dashboard = () => {
   const [selectedYear, setSelectedYear] = useState(initialYear);
 
   /**
-   * Fetch dashboard data from multiple API endpoints
-   * Updates when currentDate changes
+   * Fetch dashboard data from several API endpoints
+   * Updates whenever currentDate changes
    */
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -94,9 +94,6 @@ const Dashboard = () => {
           percentageUsed: item.percentageUsed,
         }));
         
-        console.log('Raw budget response:', budgetResponse.data);
-        console.log('Transformed budget overview:', budgetOverview);
-
         // Update summary state with fetched data
         setSummary({
           totalIncome: Number(incomeResponse.data),
@@ -105,6 +102,7 @@ const Dashboard = () => {
           budgetOverview,
         });
       } catch (error) {
+        // Log and handle errors gracefully
         console.error('Error fetching dashboard data:', error);
       }
     };
@@ -112,16 +110,14 @@ const Dashboard = () => {
     fetchDashboardData();
   }, [currentDate]);
 
-  // Dialog handlers
+  // Dialog handlers for selecting month and year
   const handleOpenDialog = () => setDialogOpen(true);
   const handleCloseDialog = () => setDialogOpen(false);
 
-  /**
-   * Apply selected date and update URL parameters
-   */
+  // Apply the selected date and update URL parameters
   const handleApplyDate = () => {
     setCurrentDate(new Date(selectedYear, selectedMonth, 1));
-    // Update URL query params for consistency
+    // Update URL query parameters for consistency
     navigate(`?year=${selectedYear}&month=${selectedMonth + 1}`);
     setDialogOpen(false);
   };
@@ -151,7 +147,7 @@ const Dashboard = () => {
         overflowX: 'hidden',
       }}
     >
-      {/* Main grid layout */}
+      {/* Main grid layout for dashboard */}
       <Grid container spacing={3} alignItems="center">
         {/* Month and Year display with change button */}
         <Grid

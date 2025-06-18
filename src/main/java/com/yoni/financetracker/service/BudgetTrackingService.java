@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service class that handles budget tracking and analysis functionality. This service combines
- * budget and expenditure data to provide insights into spending patterns and budget utilization.
+ * budget and expenditure data to provide insights into spending patterns and budget utilisation.
  *
  * <p>The @Slf4j annotation enables logging functionality. The @Service annotation marks this class
  * as a Spring service component. The @RequiredArgsConstructor generates a constructor for all final
@@ -36,7 +36,7 @@ public class BudgetTrackingService {
    * Generates budget tracking information for a specific month and year. This method: 1. Retrieves
    * all budgets and expenditures for the specified period 2. Groups expenditures by category 3.
    * Calculates spending percentages against budgets 4. Returns a list of DTOs containing the
-   * tracking information @Transactional(readOnly = true) optimizes the transaction for read-only
+   * tracking information @Transactional(readOnly = true) optimises the transaction for read-only
    * operations.
    *
    * @param month The month to track (1-12)

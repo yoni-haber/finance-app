@@ -47,7 +47,7 @@ public class BudgetService {
   }
 
   /**
-   * Retrieves all budgets within a specified date range. @Transactional(readOnly = true) optimizes
+   * Retrieves all budgets within a specified date range. @Transactional(readOnly = true) optimises
    * the transaction for read-only operations.
    *
    * @param startDate The start date of the range (inclusive)
@@ -61,7 +61,7 @@ public class BudgetService {
 
   /**
    * Retrieves a budget for a specific category within a date range. @Transactional(readOnly = true)
-   * optimizes the transaction for read-only operations.
+   * optimises the transaction for read-only operations.
    *
    * @param category The category to search for
    * @param startDate The start date of the range (inclusive)

@@ -10,9 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-/**
- * Handles global exceptions and validation errors for REST controllers.
- */
+/** Handles global exceptions and validation errors for REST controllers. */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -24,18 +22,19 @@ public class GlobalExceptionHandler {
    */
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ErrorResponse> handleValidationExceptions(
-          MethodArgumentNotValidException ex) {
+      MethodArgumentNotValidException ex) {
     Map<String, String> errors = new HashMap<>();
     ex.getBindingResult()
-            .getAllErrors()
-            .forEach(
-                    (error) -> {
-                      String fieldName = ((FieldError) error).getField();
-                      String errorMessage = error.getDefaultMessage();
-                      errors.put(fieldName, errorMessage);
-                    });
+        .getAllErrors()
+        .forEach(
+            (error) -> {
+              String fieldName = ((FieldError) error).getField();
+              String errorMessage = error.getDefaultMessage();
+              errors.put(fieldName, errorMessage);
+            });
 
-    ErrorResponse errorResponse = ErrorResponse.builder()
+    ErrorResponse errorResponse =
+        ErrorResponse.builder()
             .status(HttpStatus.BAD_REQUEST.value())
             .message("Validation failed")
             .errors(errors)
@@ -53,7 +52,8 @@ public class GlobalExceptionHandler {
    */
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
-    ErrorResponse errorResponse = ErrorResponse.builder()
+    ErrorResponse errorResponse =
+        ErrorResponse.builder()
             .status(HttpStatus.BAD_REQUEST.value())
             .message(ex.getMessage())
             .errors(null)
@@ -71,7 +71,8 @@ public class GlobalExceptionHandler {
    */
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-    ErrorResponse errorResponse = ErrorResponse.builder()
+    ErrorResponse errorResponse =
+        ErrorResponse.builder()
             .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
             .message("An unexpected error occurred")
             .errors(null)
