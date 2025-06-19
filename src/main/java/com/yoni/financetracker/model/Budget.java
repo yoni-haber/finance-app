@@ -14,6 +14,7 @@ import lombok.Data;
  * toString, equals, and hashCode methods.
  */
 @Entity
+@Table(name = "budget")
 @Data
 public class Budget {
   /**
@@ -39,10 +40,4 @@ public class Budget {
 
   /** The date when this budget was created or is effective from. */
   private LocalDate date;
-
-  /**
-   * Version field for optimistic locking. Helps prevent concurrent modification issues by tracking
-   * changes to the entity.
-   */
-  @Version private Long version;
 }

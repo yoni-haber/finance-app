@@ -15,6 +15,7 @@ import lombok.Data;
  */
 @Data
 @Entity
+@Table(name = "expenditure")
 public class Expenditure {
 
   /**

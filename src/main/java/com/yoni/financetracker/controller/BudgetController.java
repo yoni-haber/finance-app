@@ -7,6 +7,7 @@ import com.yoni.financetracker.service.BudgetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
@@ -20,13 +21,12 @@ import org.springframework.web.bind.annotation.*;
  *
  * <p>The @Slf4j annotation enables logging functionality. The @RestController annotation marks this
  * class as a REST controller. The @RequestMapping("/api/budget") annotation specifies the base URL
- * for all endpoints in this controller. The @CrossOrigin annotation allows requests from the
- * frontend development server.
+ * for all endpoints in this controller.
  */
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/budget")
+@Tag(name = "Budget", description = "Budget management APIs")
 public class BudgetController {
 
   private final BudgetService service;

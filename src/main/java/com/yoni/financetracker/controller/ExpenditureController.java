@@ -2,6 +2,7 @@ package com.yoni.financetracker.controller;
 
 import com.yoni.financetracker.model.Expenditure;
 import com.yoni.financetracker.service.ExpenditureService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +14,12 @@ import org.springframework.web.bind.annotation.*;
  *
  * <p>The @RestController annotation marks this class as a REST controller.
  * The @RequestMapping("/api/expenditure") annotation specifies the base URL for all endpoints in
- * this controller. The @CrossOrigin annotation allows requests from the frontend development
- * server.
+ * this controller.
  */
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/expenditure")
+@Tag(name = "Expenditure", description = "Expenditure management APIs")
 public class ExpenditureController {
 
   private final ExpenditureService service;

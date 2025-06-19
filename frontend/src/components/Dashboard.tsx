@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Box,
-  Card,
-  CardContent,
   Grid,
   Typography,
   Button,
@@ -14,9 +12,10 @@ import {
   DialogActions,
   Select,
   MenuItem,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
-  Add as AddIcon,
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   AccountBalance as AccountBalanceIcon,
@@ -30,10 +29,14 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  LineChart,
+  Line,
 } from 'recharts';
 import type { DashboardSummary } from '../types/dashboard';
 import axios from 'axios';
 import { useDate } from '../context/DateContext';
+import { getNetWorthHistory } from '../api/financeApi';
+import type { NetWorth } from '../types/finance';
 
 /**
  * Dashboard Component
@@ -46,8 +49,6 @@ import { useDate } from '../context/DateContext';
  * The component fetches data from several API endpoints and displays them in a responsive layout.
  */
 const Dashboard = () => {
-  // Navigation and location hooks for routing and URL parameters
-  const navigate = useNavigate();
   useLocation();
   // Use global date context
   const { year, month, setYearMonth } = useDate();
@@ -59,6 +60,22 @@ const Dashboard = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(month);
   const [selectedYear, setSelectedYear] = useState(year);
+
+  // Net worth history state
+  const [netWorthHistory, setNetWorthHistory] = useState<NetWorth[]>([]);
+  const [netWorthStats, setNetWorthStats] = useState<{
+    change1: number;
+    change3: number;
+    highest: number;
+    lowest: number;
+    avg: number;
+  }>({ change1: 0, change3: 0, highest: 0, lowest: 0, avg: 0 });
+
+  // Dashboard view state
+  const [dashboardView, setDashboardView] = useState<'budget' | 'networth'>('budget');
+  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
+    setDashboardView(newValue === 0 ? 'budget' : 'networth');
+  };
 
   /**
    * Fetch dashboard data from several API endpoints
@@ -99,6 +116,30 @@ const Dashboard = () => {
     fetchDashboardData();
   }, [year, month]);
 
+  // Fetch net worth history
+  useEffect(() => {
+    getNetWorthHistory().then(res => {
+      const history: NetWorth[] = res.data || [];
+      // Sort by year, month
+      history.sort((a, b) => (a.year !== b.year ? a.year - b.year : a.month - b.month));
+      setNetWorthHistory(history);
+      // Calculate stats
+      const netWorths = history.map(nw => nw.assets - nw.liabilities);
+      const len = netWorths.length;
+      const change1 = len > 1 ? netWorths[len - 1] - netWorths[len - 2] : 0;
+      const change3 =
+        len > 3
+          ? netWorths[len - 1] - netWorths[len - 4]
+          : len > 1
+            ? netWorths[len - 1] - netWorths[0]
+            : 0;
+      const highest = netWorths.length ? Math.max(...netWorths) : 0;
+      const lowest = netWorths.length ? Math.min(...netWorths) : 0;
+      const avg = netWorths.length > 1 ? (netWorths[len - 1] - netWorths[0]) / (len - 1) : 0;
+      setNetWorthStats({ change1, change3, highest, lowest, avg });
+    });
+  }, []);
+
   // Dialog handlers for selecting month and year
   const handleOpenDialog = () => {
     setSelectedMonth(month);
@@ -137,102 +178,228 @@ const Dashboard = () => {
         overflowX: 'hidden',
       }}
     >
-      {/* Main grid layout for dashboard */}
-      <Grid container spacing={3} alignItems="center">
-        {/* Month and Year display with change button */}
-        <Grid
-          item
-          xs={12}
-          md={2}
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}
+      {/* Dashboard View Tabs */}
+      <Box display="flex" justifyContent="flex-end" mb={2}>
+        <Tabs
+          value={dashboardView === 'budget' ? 0 : 1}
+          onChange={handleTabChange}
+          indicatorColor="primary"
+          textColor="primary"
         >
-          <Box display="flex" flexDirection="column" alignItems="center">
-            <Typography variant="h3" fontWeight="bold" color="text.primary">
+          <Tab label="Budget Overview" />
+          <Tab label="Net Worth Overview" />
+        </Tabs>
+      </Box>
+      {/* Main grid layout for dashboard */}
+      <Grid container spacing={3} alignItems="flex-start">
+        <Grid item xs={12} md={3}>
+          {/* Date Selector above summary */}
+          <Box display="flex" alignItems="center" justifyContent="center" mb={2} gap={2}>
+            <Typography variant="h4" fontWeight="bold" color="text.primary">
               {monthName} {year}
             </Typography>
-            <Button variant="outlined" sx={{ mt: 2 }} onClick={handleOpenDialog}>
+            <Button variant="outlined" onClick={handleOpenDialog}>
               Change
             </Button>
           </Box>
+          <Paper sx={{ p: 2, boxShadow: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Summary
+            </Typography>
+            <Grid container direction="column" spacing={2}>
+              {dashboardView === 'budget' ? (
+                <>
+                  <Grid item>
+                    <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
+                      <TrendingUpIcon color="success" />
+                      <Typography variant="subtitle2">Total Income</Typography>
+                      <Typography variant="h5" fontWeight="bold">
+                        £{summary.totalIncome.toFixed(2)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item>
+                    <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
+                      <TrendingDownIcon color="error" />
+                      <Typography variant="subtitle2">Total Expenses</Typography>
+                      <Typography variant="h5" fontWeight="bold">
+                        £{summary.totalExpenses.toFixed(2)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item>
+                    <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
+                      <AccountBalanceIcon color="primary" />
+                      <Typography variant="subtitle2">Net Balance</Typography>
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color={summary.netBalance >= 0 ? 'success.main' : 'error.main'}
+                      >
+                        £{summary.netBalance.toFixed(2)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </>
+              ) : (
+                <>
+                  <Grid item>
+                    <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
+                      <AccountBalanceIcon
+                        color={
+                          netWorthHistory.length > 0 &&
+                          netWorthHistory[netWorthHistory.length - 1].assets -
+                            netWorthHistory[netWorthHistory.length - 1].liabilities >=
+                            0
+                            ? 'success'
+                            : 'error'
+                        }
+                      />
+                      <Typography variant="subtitle2">Current Net Worth</Typography>
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color={
+                          netWorthHistory.length > 0 &&
+                          netWorthHistory[netWorthHistory.length - 1].assets -
+                            netWorthHistory[netWorthHistory.length - 1].liabilities >=
+                            0
+                            ? 'success.main'
+                            : 'error.main'
+                        }
+                      >
+                        {netWorthHistory.length > 0
+                          ? (
+                              netWorthHistory[netWorthHistory.length - 1].assets -
+                              netWorthHistory[netWorthHistory.length - 1].liabilities
+                            ).toLocaleString('en-GB', {
+                              style: 'currency',
+                              currency: 'GBP',
+                              minimumFractionDigits: 2,
+                            })
+                          : 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item>
+                    <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
+                      {netWorthStats.change1 >= 0 ? (
+                        <TrendingUpIcon color="success" />
+                      ) : (
+                        <TrendingDownIcon color="error" />
+                      )}
+                      <Typography variant="subtitle2">Change (1 month)</Typography>
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color={netWorthStats.change1 >= 0 ? 'success.main' : 'error.main'}
+                      >
+                        {netWorthStats.change1 >= 0 ? '+' : ''}
+                        {netWorthStats.change1.toLocaleString('en-GB', {
+                          style: 'currency',
+                          currency: 'GBP',
+                          minimumFractionDigits: 2,
+                        })}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item>
+                    <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
+                      {netWorthStats.change3 >= 0 ? (
+                        <TrendingUpIcon color="success" />
+                      ) : (
+                        <TrendingDownIcon color="error" />
+                      )}
+                      <Typography variant="subtitle2">Change (3 months)</Typography>
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color={netWorthStats.change3 >= 0 ? 'success.main' : 'error.main'}
+                      >
+                        {netWorthStats.change3 >= 0 ? '+' : ''}
+                        {netWorthStats.change3.toLocaleString('en-GB', {
+                          style: 'currency',
+                          currency: 'GBP',
+                          minimumFractionDigits: 2,
+                        })}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item>
+                    <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
+                      {netWorthStats.avg >= 0 ? (
+                        <TrendingUpIcon color="success" />
+                      ) : (
+                        <TrendingDownIcon color="error" />
+                      )}
+                      <Typography variant="subtitle2">Avg. Monthly Change</Typography>
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color={netWorthStats.avg >= 0 ? 'success.main' : 'error.main'}
+                      >
+                        {netWorthStats.avg >= 0 ? '+' : ''}
+                        {netWorthStats.avg.toLocaleString('en-GB', {
+                          style: 'currency',
+                          currency: 'GBP',
+                          minimumFractionDigits: 2,
+                        })}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </>
+              )}
+            </Grid>
+          </Paper>
         </Grid>
-
-        {/* Financial summary cards */}
-        <Grid
-          item
-          xs={12}
-          md={8}
-          sx={{
-            ml: 'auto',
-            maxWidth: 700,
-            transition: 'max-width 0.2s',
-          }}
-        >
-          <Grid container spacing={3}>
-            {/* Income Card */}
-            <Grid item xs={12} md={4}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <TrendingUpIcon color="success" sx={{ mr: 1 }} />
-                    <Typography variant="h6">Total Income</Typography>
-                  </Box>
-                  <Typography variant="h4">£{summary.totalIncome.toFixed(2)}</Typography>
-                </CardContent>
-              </Card>
-              <Box mt={2} display="flex" justifyContent="center">
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => navigate('/income')}
-                >
-                  Add Income
-                </Button>
-              </Box>
-            </Grid>
-
-            {/* Expenses Card */}
-            <Grid item xs={12} md={4}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <TrendingDownIcon color="error" sx={{ mr: 1 }} />
-                    <Typography variant="h6">Total Expenses</Typography>
-                  </Box>
-                  <Typography variant="h4">£{summary.totalExpenses.toFixed(2)}</Typography>
-                </CardContent>
-              </Card>
-              <Box mt={2} display="flex" justifyContent="center">
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => navigate('/expenses')}
-                >
-                  Add Expense
-                </Button>
-              </Box>
-            </Grid>
-
-            {/* Net Balance Card */}
-            <Grid item xs={12} md={4}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <AccountBalanceIcon color="primary" sx={{ mr: 1 }} />
-                    <Typography variant="h6">Net Balance</Typography>
-                  </Box>
-                  <Typography
-                    variant="h4"
-                    color={summary.netBalance >= 0 ? 'success.main' : 'error.main'}
+        {/* Main Chart - right column on desktop, below summary on mobile */}
+        <Grid item xs={12} md={9}>
+          <Paper sx={{ p: 2, boxShadow: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              {dashboardView === 'budget' ? 'Budget Overview' : 'Net Worth Overview'}
+            </Typography>
+            <Box height={400}>
+              <ResponsiveContainer width="100%" height="100%">
+                {dashboardView === 'budget' ? (
+                  <BarChart data={summary.budgetOverview}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="category" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="budgeted" name="Budgeted" fill="#8884d8" />
+                    <Bar dataKey="spent" name="Spent" fill="#82ca9d" />
+                  </BarChart>
+                ) : (
+                  <LineChart
+                    data={netWorthHistory.map(nw => ({
+                      name: `${new Date(nw.year, nw.month - 1).toLocaleString('default', { month: 'short', year: '2-digit' })}`,
+                      netWorth: nw.assets - nw.liabilities,
+                    }))}
                   >
-                    £{summary.netBalance.toFixed(2)}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip
+                      formatter={v =>
+                        `£${Number(v).toLocaleString('en-GB', { minimumFractionDigits: 2 })}`
+                      }
+                    />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="netWorth"
+                      stroke="#1976d2"
+                      strokeWidth={3}
+                      dot={true}
+                    />
+                  </LineChart>
+                )}
+              </ResponsiveContainer>
+            </Box>
+          </Paper>
         </Grid>
       </Grid>
-
       {/* Month/Year Selection Dialog */}
       <Dialog open={dialogOpen} onClose={handleCloseDialog}>
         <DialogTitle>Select Month and Year</DialogTitle>
@@ -259,37 +426,6 @@ const Dashboard = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Budget Overview Chart */}
-      <Grid container spacing={3} sx={{ mt: 1 }}>
-        <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h5">Budget Overview</Typography>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => navigate('/budget')}
-              >
-                Set Budget
-              </Button>
-            </Box>
-            <Box height={400}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={summary.budgetOverview}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="category" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="budgeted" name="Budgeted" fill="#8884d8" />
-                  <Bar dataKey="spent" name="Spent" fill="#82ca9d" />
-                </BarChart>
-              </ResponsiveContainer>
-            </Box>
-          </Paper>
-        </Grid>
-      </Grid>
     </Box>
   );
 };

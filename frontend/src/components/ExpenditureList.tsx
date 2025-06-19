@@ -75,6 +75,7 @@ const ExpenditureList: React.FC<ExpenditureListProps> = ({ refreshTrigger, year,
     amount: '',
     category: '',
   });
+  const [filterCategory, setFilterCategory] = useState<string>('ALL');
 
   const monthName = new Date(year, month).toLocaleString('default', { month: 'long' });
 
@@ -153,6 +154,15 @@ const ExpenditureList: React.FC<ExpenditureListProps> = ({ refreshTrigger, year,
     }
   };
 
+  // Filtered expenditures based on selected category
+  const filteredExpenditures =
+    filterCategory === 'ALL'
+      ? expenditures
+      : expenditures.filter(e => e.category === filterCategory);
+
+  // Calculate total for filtered expenditures
+  const filteredTotal = filteredExpenditures.reduce((sum, e) => sum + e.amount, 0);
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
@@ -171,12 +181,29 @@ const ExpenditureList: React.FC<ExpenditureListProps> = ({ refreshTrigger, year,
 
   return (
     <>
+      <Box mb={2} display="flex" alignItems="center" gap={2}>
+        <Typography variant="subtitle1">Filter by Category:</Typography>
+        <TextField
+          select
+          size="small"
+          value={filterCategory}
+          onChange={e => setFilterCategory(e.target.value)}
+          sx={{ minWidth: 180 }}
+        >
+          <MenuItem value="ALL">All</MenuItem>
+          {Object.values(Category).map(cat => (
+            <MenuItem key={cat} value={cat}>
+              {cat.charAt(0) + cat.slice(1).toLowerCase()}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Box>
       <Paper sx={{ p: 3, mt: 2 }}>
         <Typography variant="h6" gutterBottom>
           {`Expenses in ${monthName}`}
         </Typography>
         <List>
-          {expenditures.map(expenditure => (
+          {filteredExpenditures.map(expenditure => (
             <ListItem
               key={expenditure.id}
               secondaryAction={
@@ -207,7 +234,9 @@ const ExpenditureList: React.FC<ExpenditureListProps> = ({ refreshTrigger, year,
         </List>
         {totalExpenditure !== null && (
           <Box sx={{ mt: 2, textAlign: 'right' }}>
-            <Typography variant="subtitle1">Total: £{totalExpenditure.toFixed(2)}</Typography>
+            <Typography variant="subtitle1">
+              Total: £{(filterCategory === 'ALL' ? totalExpenditure : filteredTotal).toFixed(2)}
+            </Typography>
           </Box>
         )}
       </Paper>

@@ -1,6 +1,6 @@
 # Finance Tracker
 
-A full-stack application for tracking personal finances, including budgets, income, and expenditures. The backend is built with Spring Boot (Java), and the frontend is built with React (TypeScript) and Material-UI.
+A full-stack application for tracking personal finances, including budgets, income, expenditures, assets, liabilities, and net worth. The backend is built with Spring Boot (Java), and the frontend is built with React (TypeScript) and Material-UI.
 
 ---
 
@@ -10,7 +10,7 @@ A full-stack application for tracking personal finances, including budgets, inco
 - [Project Structure](#project-structure)
 - [Setup and Installation](#setup-and-installation)
 - [Usage](#usage)
-- [How the Frontend and Backend Communicate](#how-the-frontend-and-backend-communicate)
+- [Frontend and Backend Communication](#frontend-and-backend-communication)
 - [API Overview](#api-overview)
 - [Development and Code Quality](#development-and-code-quality)
 - [Additional Resources](#additional-resources)
@@ -22,6 +22,7 @@ A full-stack application for tracking personal finances, including budgets, inco
 - Budget management with categories
 - Income tracking and management
 - Expenditure tracking and management
+- Net Worth tracking
 - Budget utilisation tracking
 - Responsive dashboard with financial overview
 - Dark/Light theme support
@@ -63,7 +64,7 @@ finance-tracker/
 │   ├── src/
 │   │   ├── api/              # API integration layer (handles all HTTP requests to backend)
 │   │   ├── components/       # Reusable UI components (forms, lists, dashboard, etc.)
-│   │   ├── context/          # React context providers (e.g., theme management)
+│   │   ├── context/          # React context providers (e.g., global theme/date management)
 │   │   ├── pages/            # Top-level page components for routing
 │   │   ├── types/            # TypeScript type definitions for app data
 │   │   ├── App.tsx           # Root React component, sets up routes and layout
@@ -135,7 +136,7 @@ npm run dev
 ## Frontend and Backend Communication
 
 - **API Calls:**
-  - The frontend uses Axios to make HTTP requests to the backend's RESTful API endpoints (e.g., `/api/income`, `/api/budget`).
+  - The frontend uses Axios to make HTTP requests to the backend's RESTful API endpoints (e.g., `/api/income`, `/api/budget`, `/api/assets`, `/api/liabilities`, `/api/networth`).
   - All API integration is centralised in the `frontend/src/api/` directory for maintainability.
 - **CORS (Cross-Origin Resource Sharing):**
   - The backend is configured to allow requests from the frontend development server (`http://localhost:5173`).
@@ -148,10 +149,10 @@ npm run dev
   - The frontend displays user-friendly error messages and handles loading states.
 
 **Example Communication Flow:**
-1. User submits a new income entry in the frontend form.
-2. The frontend sends a POST request to `/api/income` with the income data as JSON.
+1. User submits a new asset or liability in the Net Worth page.
+2. The frontend sends a POST request to `/api/assets` or `/api/liabilities` with the data as JSON.
 3. The backend validates, saves the data, and responds with the created record or an error.
-4. The frontend updates the UI accordingly.
+4. The frontend updates the UI accordingly and auto-syncs net worth.
 
 ---
 
@@ -177,6 +178,17 @@ npm run dev
 - `GET /api/expenditure/total` - Get total expenditure for a month
 - `PUT /api/expenditure/{id}` - Update expenditure
 - `DELETE /api/expenditure/{id}` - Delete expenditure
+
+### Net Worth, Assets, and Liabilities (NEW)
+- `POST /api/assets` - Add new asset
+- `GET /api/assets` - Get assets for a month
+- `DELETE /api/assets/{id}` - Delete asset
+- `POST /api/liabilities` - Add new liability
+- `GET /api/liabilities` - Get liabilities for a month
+- `DELETE /api/liabilities/{id}` - Delete liability
+- `POST /api/networth` - Save or update net worth for a month
+- `GET /api/networth` - Get net worth for a month
+- `GET /api/networth/history` - Get net worth history (optionally in a date range)
 
 ### Budget Tracking
 - `GET /api/budget-tracking` - Get budget tracking information for a month

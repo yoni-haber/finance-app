@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Container, Typography, Box } from '@mui/material';
+import { Container, Typography, Box, Paper, Divider } from '@mui/material';
 import IncomeForm from '../components/IncomeForm';
 import IncomeList from '../components/IncomeList';
 import { useDate } from '../context/DateContext';
@@ -18,8 +18,19 @@ const Income = () => {
         <Typography variant="h4" component="h1" gutterBottom color="text.primary">
           Income Management
         </Typography>
-        <IncomeForm onIncomeAdded={handleIncomeAdded} year={year} month={month} />
-        <IncomeList refreshTrigger={refreshKey} year={year} month={month} />
+        <Paper sx={{ p: 3, mb: 4 }} elevation={2}>
+          <Typography variant="h6" gutterBottom>
+            Add Income
+          </Typography>
+          <IncomeForm onIncomeAdded={handleIncomeAdded} year={year} month={month} />
+        </Paper>
+        <Paper sx={{ p: 3 }} elevation={2}>
+          <Typography variant="h6" gutterBottom>
+            Income History
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          <IncomeList refreshTrigger={refreshKey} year={year} month={month} />
+        </Paper>
       </Box>
     </Container>
   );

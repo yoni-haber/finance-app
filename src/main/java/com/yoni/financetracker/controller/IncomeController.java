@@ -22,13 +22,12 @@ import org.springframework.web.bind.annotation.*;
  * <p>The @Tag annotation provides metadata for the Swagger/OpenAPI documentation.
  * The @RestController annotation marks this class as a REST controller.
  * The @RequestMapping("/api/income") annotation specifies the base URL for all endpoints in this
- * controller. The @CrossOrigin annotation allows requests from the frontend development server.
+ * controller.
  */
 @Slf4j
 @Tag(name = "Income", description = "Income management APIs")
 @RestController
 @RequestMapping("/api/income")
-@CrossOrigin(origins = "http://localhost:5173")
 public class IncomeController {
 
   private final IncomeService service;
