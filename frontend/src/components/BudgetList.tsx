@@ -1,59 +1,30 @@
-/**
- * BudgetList Component
- *
- * This component displays a list of budget entries with the following features:
- * - Fetches and displays budget entries for the current month
- * - Shows total budget amount
- * - Allows editing of budget entries through a dialog
- * - Allows deletion of budget entries
- * - Handles loading states and error messages
- *
- * Component Structure:
- * 1. State Management:
- *    - budgets: Array of budget entries
- *    - loading: Loading state indicator
- *    - error: Error state for error handling
- *    - editDialogOpen: Controls edit dialog visibility
- *    - editingBudget: Currently edited budget entry
- *    - editFormData: Form data for editing (amount and category)
- *
- * 2. Main Functions:
- *    - fetchBudgets: Fetches budget data from API
- *    - handleDelete: Handles budget deletion
- *    - handleEdit: Opens edit dialog
- *    - handleEditDialogClose: Closes edit dialog
- *    - handleEditSubmit: Handles form submission
- *
- * 3. UI Components:
- *    - List of budget entries
- *    - Edit dialog with form
- *    - Loading spinner
- *    - Error message
- *    - Total budget display
- */
-
 import React, { useEffect, useState } from 'react';
 import {
-  Paper,
-  Typography,
-  Box,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-  CircularProgress,
-  Alert,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
+  Box,
+  Button,
   MenuItem,
+  ListItemText,
 } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import GenericList from './common/GenericList';
 import api from '../api/financeApi';
 import type { Budget } from '../types/finance';
 import { Category } from '../types/category';
+
+/**
+ * BudgetList Component
+ *
+ * Displays a list of budget entries for a given month and year. Supports editing and deleting entries.
+ *
+ * Props:
+ * - refreshTrigger: (optional) Number that triggers a refresh when changed.
+ * - year: The selected year for which to display budgets.
+ * - month: The selected month for which to display budgets.
+ */
 
 interface BudgetListProps {
   refreshTrigger?: number;
@@ -62,9 +33,12 @@ interface BudgetListProps {
 }
 
 const BudgetList: React.FC<BudgetListProps> = ({ refreshTrigger, year, month }) => {
+  // State for the list of budgets
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  // State for loading and error
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // State for edit dialog
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [editFormData, setEditFormData] = useState({
@@ -72,34 +46,50 @@ const BudgetList: React.FC<BudgetListProps> = ({ refreshTrigger, year, month }) 
     category: '',
   });
 
+  /**
+   * Fetches budget data from the API for the selected month/year.
+   */
   const fetchBudgets = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await api.get(`/budget?year=${year}&month=${month + 1}`);
       setBudgets(response.data);
-    } catch (error) {
-      console.error('Error fetching budgets:', error);
-      setError('Failed to load budgets. Please try again.');
+    } catch (error: any) {
+      setError(
+        error?.response?.data?.message ||
+          error?.message ||
+          'Failed to load budgets. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  // Refresh the list when refreshTrigger, year, or month changes
   useEffect(() => {
     fetchBudgets();
   }, [refreshTrigger, year, month]);
 
+  /**
+   * Deletes a budget entry by ID and refreshes the list.
+   */
   const handleDelete = async (id: number | undefined) => {
     try {
       await api.delete(`/budget/${id}`);
       await fetchBudgets();
-    } catch (error) {
-      console.error('Error deleting budget:', error);
-      setError('Failed to delete budget. Please try again.');
+    } catch (error: any) {
+      setError(
+        error?.response?.data?.message ||
+          error?.message ||
+          'Failed to delete budget. Please try again.'
+      );
     }
   };
 
+  /**
+   * Opens the edit dialog for a specific budget entry.
+   */
   const handleEdit = (budget: Budget) => {
     setEditingBudget(budget);
     setEditFormData({
@@ -109,6 +99,9 @@ const BudgetList: React.FC<BudgetListProps> = ({ refreshTrigger, year, month }) 
     setEditDialogOpen(true);
   };
 
+  /**
+   * Closes the edit dialog and resets the form.
+   */
   const handleEditDialogClose = () => {
     setEditDialogOpen(false);
     setEditingBudget(null);
@@ -118,84 +111,53 @@ const BudgetList: React.FC<BudgetListProps> = ({ refreshTrigger, year, month }) 
     });
   };
 
+  /**
+   * Submits the edited budget entry to the API and refreshes the list.
+   */
   const handleEditSubmit = async () => {
     if (!editingBudget) return;
-
     try {
       const updatedBudget = {
         ...editingBudget,
         amount: parseFloat(editFormData.amount),
         category: editFormData.category,
       };
-
       await api.put(`/budget/${editingBudget.id}`, updatedBudget);
       await fetchBudgets();
       handleEditDialogClose();
-    } catch (error) {
-      console.error('Error updating budget:', error);
-      setError('Failed to update budget. Please try again.');
+    } catch (error: any) {
+      setError(
+        error?.response?.data?.message ||
+          error?.message ||
+          'Failed to update budget. Please try again.'
+      );
     }
   };
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert severity="error" sx={{ mt: 2 }}>
-        {error}
-      </Alert>
-    );
-  }
-
+  // Calculate the total budget for the month
   const totalBudget = budgets.reduce((sum, budget) => sum + budget.amount, 0);
+  // Get the month name for display
   const monthName = new Date(year, month).toLocaleString('default', { month: 'long' });
 
   return (
     <>
-      <Paper sx={{ p: 3, mt: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          {`Budgets in ${monthName}`}
-        </Typography>
-        <List>
-          {budgets.map(budget => (
-            <ListItem
-              key={budget.id}
-              secondaryAction={
-                <Box>
-                  <Button
-                    startIcon={<EditIcon />}
-                    onClick={() => handleEdit(budget)}
-                    sx={{ mr: 1 }}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    startIcon={<DeleteIcon />}
-                    color="error"
-                    onClick={() => handleDelete(budget.id)}
-                  >
-                    Delete
-                  </Button>
-                </Box>
-              }
-            >
-              <ListItemText primary={budget.category} secondary={`£${budget.amount.toFixed(2)}`} />
-            </ListItem>
-          ))}
-        </List>
-        {budgets.length > 0 && (
-          <Box sx={{ mt: 2, textAlign: 'right' }}>
-            <Typography variant="subtitle1">Total: £{totalBudget.toFixed(2)}</Typography>
-          </Box>
+      <GenericList<Budget>
+        title={`Budgets in ${monthName}`}
+        items={budgets}
+        loading={loading}
+        error={error}
+        getKey={item => item.id ?? ''} // Use budget ID as the unique key
+        renderItem={budget => (
+          // Display the budget's category and amount
+          <ListItemText primary={budget.category} secondary={`£${budget.amount.toFixed(2)}`} />
         )}
-      </Paper>
+        onEdit={handleEdit}
+        onDelete={budget => handleDelete(budget.id)}
+        totalLabel="Total"
+        totalValue={`£${totalBudget.toFixed(2)}`}
+      />
 
+      {/* Edit dialog for updating a budget entry */}
       <Dialog open={editDialogOpen} onClose={handleEditDialogClose}>
         <DialogTitle>Edit Budget</DialogTitle>
         <DialogContent>

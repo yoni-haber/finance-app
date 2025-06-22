@@ -41,27 +41,28 @@ import type { NetWorth } from '../types/finance';
 /**
  * Dashboard Component
  *
- * This is the main dashboard component that displays:
- * 1. Financial summary (Income, Expenses, Net Balance)
- * 2. Budget overview chart
- * 3. Month/Year selection
+ * Main landing page showing a summary of finances, budget, and net worth.
  *
- * The component fetches data from several API endpoints and displays them in a responsive layout.
+ * Features:
+ * - Tabs to switch between Budget and Net Worth views
+ * - Month/year selector dialog
+ * - Summary cards for income, expenses, net balance, and net worth
+ * - Charts for budget and net worth history
+ *
+ * Uses DateContext for global date selection.
+ * No props.
  */
+
 const Dashboard = () => {
   useLocation();
-  // Use global date context
+  // Get current year/month and setter from context
   const { year, month, setYearMonth } = useDate();
 
-  // State management for dashboard summary
+  // State: summary data, dialog open, selected date, net worth history/stats, tab view
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
-
-  // Dialog state for month/year selection
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(month);
   const [selectedYear, setSelectedYear] = useState(year);
-
-  // Net worth history state
   const [netWorthHistory, setNetWorthHistory] = useState<NetWorth[]>([]);
   const [netWorthStats, setNetWorthStats] = useState<{
     change1: number;
@@ -70,21 +71,21 @@ const Dashboard = () => {
     lowest: number;
     avg: number;
   }>({ change1: 0, change3: 0, highest: 0, lowest: 0, avg: 0 });
-
-  // Dashboard view state
   const [dashboardView, setDashboardView] = useState<'budget' | 'networth'>('budget');
+
+  // Handle tab switch between Budget and Net Worth
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setDashboardView(newValue === 0 ? 'budget' : 'networth');
   };
 
   /**
-   * Fetch dashboard data from several API endpoints
-   * Updates whenever year/month changes
+   * Fetch dashboard summary data (income, expenses, budget) for selected month/year.
+   * Runs when year or month changes.
    */
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch data from multiple endpoints in parallel
+        // Fetch totals and budget tracking in parallel
         const [incomeResponse, expensesResponse, budgetResponse] = await Promise.all([
           axios.get(`/api/income/total?year=${year}&month=${month + 1}`),
           axios.get(`/api/expenditure/total?year=${year}&month=${month + 1}`),
@@ -116,7 +117,10 @@ const Dashboard = () => {
     fetchDashboardData();
   }, [year, month]);
 
-  // Fetch net worth history
+  /**
+   * Fetch net worth history and calculate stats (change, avg, min, max).
+   * Runs once on mount.
+   */
   useEffect(() => {
     getNetWorthHistory().then(res => {
       const history: NetWorth[] = res.data || [];
@@ -140,27 +144,25 @@ const Dashboard = () => {
     });
   }, []);
 
-  // Dialog handlers for selecting month and year
+  // Dialog handlers for month/year selection
   const handleOpenDialog = () => {
     setSelectedMonth(month);
     setSelectedYear(year);
     setDialogOpen(true);
   };
   const handleCloseDialog = () => setDialogOpen(false);
-
-  // Apply the selected date and update context
   const handleApplyDate = () => {
     setYearMonth(selectedYear, selectedMonth);
     setDialogOpen(false);
   };
 
-  // Generate arrays for month and year selection
+  // Arrays for month/year dropdowns
   const months = Array.from({ length: 12 }, (_, i) =>
     new Date(0, i).toLocaleString('default', { month: 'long' })
   );
   const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
 
-  // Show loading state while data is being fetched
+  // Show loading while summary is null
   if (!summary) {
     return <Typography>Loading...</Typography>;
   }
@@ -180,6 +182,7 @@ const Dashboard = () => {
     >
       {/* Dashboard View Tabs */}
       <Box display="flex" justifyContent="flex-end" mb={2}>
+        {/* Tabs for switching between Budget and Net Worth views */}
         <Tabs
           value={dashboardView === 'budget' ? 0 : 1}
           onChange={handleTabChange}
@@ -207,8 +210,10 @@ const Dashboard = () => {
               Summary
             </Typography>
             <Grid container direction="column" spacing={2}>
+              {/* Show summary cards for either Budget or Net Worth view */}
               {dashboardView === 'budget' ? (
                 <>
+                  {/* Income, Expenses, Net Balance */}
                   <Grid item>
                     <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
                       <TrendingUpIcon color="success" />
@@ -243,6 +248,7 @@ const Dashboard = () => {
                 </>
               ) : (
                 <>
+                  {/* Net Worth, 1/3 month change, avg change */}
                   <Grid item>
                     <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
                       <AccountBalanceIcon
@@ -360,6 +366,7 @@ const Dashboard = () => {
             </Typography>
             <Box height={400}>
               <ResponsiveContainer width="100%" height="100%">
+                {/* Show bar chart for budget, line chart for net worth */}
                 {dashboardView === 'budget' ? (
                   <BarChart data={summary.budgetOverview}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -404,6 +411,7 @@ const Dashboard = () => {
       <Dialog open={dialogOpen} onClose={handleCloseDialog}>
         <DialogTitle>Select Month and Year</DialogTitle>
         <DialogContent sx={{ display: 'flex', gap: 2, mt: 1 }}>
+          {/* Month and year dropdowns */}
           <Select value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
             {months.map((m, idx) => (
               <MenuItem key={m} value={idx}>

@@ -1,5 +1,16 @@
-import React, { useState } from 'react';
-import { Box, TextField, Button, Typography } from '@mui/material';
+/**
+ * AssetForm Component
+ *
+ * A form for adding a new asset. Users can enter an amount and an optional comment.
+ *
+ * Props:
+ * - onAdd: Function called when the form is submitted. Receives the new asset data.
+ * - loading: (optional) Whether the form is in a loading state.
+ * - error: (optional) Error message to display below the form.
+ */
+import React from 'react';
+import GenericForm, { type FieldConfig } from './common/GenericForm';
+import { useFormFields } from './common/useFormFields';
 
 /**
  * Props for the AssetForm component.
@@ -19,8 +30,11 @@ interface AssetFormProps {
  * A form for adding asset data, including an amount and an optional comment.
  */
 const AssetForm: React.FC<AssetFormProps> = ({ onAdd, loading = false, error = null }) => {
-  const [amount, setAmount] = useState('');
-  const [comment, setComment] = useState('');
+  // State for form fields: amount and comment
+  const [fields, handleFieldChange, setFields] = useFormFields({
+    amount: '',
+    comment: '',
+  });
 
   /**
    * Handles form submission.
@@ -29,38 +43,41 @@ const AssetForm: React.FC<AssetFormProps> = ({ onAdd, loading = false, error = n
    */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount) return;
-    onAdd({ amount: parseFloat(amount), comment });
-    setAmount('');
-    setComment('');
+    if (!fields.amount) return; // Do not submit if amount is empty
+    onAdd({ amount: parseFloat(fields.amount), comment: fields.comment });
+    setFields({ amount: '', comment: '' }); // Reset form fields
   };
 
+  // Define the fields to render in the form
+  const formFields: FieldConfig[] = [
+    {
+      name: 'amount',
+      label: 'Amount',
+      type: 'number',
+      value: fields.amount,
+      onChange: handleFieldChange('amount'),
+      required: true,
+      inputProps: { min: 0, step: '0.01' },
+      size: 'small',
+    },
+    {
+      name: 'comment',
+      label: 'Comment',
+      type: 'text',
+      value: fields.comment,
+      onChange: handleFieldChange('comment'),
+      size: 'small',
+    },
+  ];
+
   return (
-    <form onSubmit={handleSubmit}>
-      {/* Input fields for amount and comment */}
-      <Box display="flex" gap={2} mb={2}>
-        <TextField
-          label="Amount"
-          type="number"
-          value={amount}
-          onChange={e => setAmount(e.target.value)}
-          inputProps={{ min: 0, step: '0.01' }}
-          size="small"
-          required
-        />
-        <TextField
-          label="Comment"
-          value={comment}
-          onChange={e => setComment(e.target.value)}
-          size="small"
-        />
-        <Button type="submit" variant="contained" disabled={loading}>
-          Add
-        </Button>
-      </Box>
-      {/* Show error if present */}
-      {error && <Typography color="error">{error}</Typography>}
-    </form>
+    <GenericForm
+      fields={formFields}
+      onSubmit={handleSubmit}
+      loading={loading}
+      error={error}
+      submitLabel="Add"
+    />
   );
 };
 

@@ -1,36 +1,18 @@
+import React, { useRef, useEffect, useState } from 'react';
+import GenericForm, { type FieldConfig } from './common/GenericForm';
+import { useFormFields } from './common/useFormFields';
+import api from '../api/financeApi';
+
 /**
  * IncomeForm Component
  *
- * This component provides a form for adding new income entries with the following features:
- * - Date selection
- * - Description input
- * - Amount input with validation
- * - Error handling
- * - Loading state
- * - Form submission to API
+ * A form for adding a new income entry. Users can enter a date, description, and amount.
  *
- * Component Structure:
- * 1. State Management:
- *    - date: Selected date
- *    - description: Income description
- *    - amount: Income amount
- *    - error: Error state for error handling
- *    - loading: Loading state indicator
- *
- * 2. Main Functions:
- *    - handleSubmit: Handles form submission and API call
- *
- * 3. UI Components:
- *    - Date picker
- *    - Description text field
- *    - Amount input with validation
- *    - Submit button with loading state
- *    - Error message display
+ * Props:
+ * - onIncomeAdded: Function called after a successful submission to refresh the list.
+ * - year: The selected year (used for default date).
+ * - month: The selected month (used for default date).
  */
-
-import React, { useState, useEffect, useRef } from 'react';
-import { Paper, Typography, TextField, Button, Box } from '@mui/material';
-import api from '../api/financeApi';
 
 interface IncomeFormProps {
   onIncomeAdded: () => void;
@@ -39,112 +21,97 @@ interface IncomeFormProps {
 }
 
 const IncomeForm: React.FC<IncomeFormProps> = ({ onIncomeAdded, year, month }) => {
-  // Form state management
-  const [date, setDate] = useState('');
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
+  // State for error and loading
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // Set default date when year/month changes, but only if the user hasn't entered a date
+  // Used to only set the default date once per year/month change
   const didSetDefault = useRef(false);
+
+  // State for form fields: date, description, amount
+  const [fields, handleFieldChange, setFields] = useFormFields({
+    date: '',
+    description: '',
+    amount: '',
+  });
+
+  // Set default date to the first of the selected month/year if not already set
   useEffect(() => {
-    if (!date && !didSetDefault.current) {
-      setDate(`${year}-${String(month + 1).padStart(2, '0')}-01`);
+    if (!fields.date && !didSetDefault.current) {
+      setFields(f => ({ ...f, date: `${year}-${String(month + 1).padStart(2, '0')}-01` }));
       didSetDefault.current = true;
     }
-    // Reset flag if year/month changes and date is cleared
-    if (!date) didSetDefault.current = false;
-  }, [year, month]);
+    if (!fields.date) didSetDefault.current = false;
+  }, [year, month, fields.date, setFields]);
 
   /**
-   * Handle form submission
-   * - Prevents default form behavior
-   * - Validates and submits data to API
-   * - Clears form on success
-   * - Handles errors
-   * - Notifies parent component on success
+   * Handles form submission: validates, sends to API, resets fields, and notifies parent.
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
     try {
-      // Use the selected year/month if date is not provided
-      let submitDate = date;
+      let submitDate = fields.date;
       if (!submitDate) {
-        // Default to first day of selected month/year
         submitDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
       }
       await api.post('/income', {
         date: submitDate,
-        description,
-        amount: parseFloat(amount),
+        description: fields.description,
+        amount: parseFloat(fields.amount),
       });
-      setDate('');
-      setDescription('');
-      setAmount('');
-      if (onIncomeAdded) {
-        onIncomeAdded();
-      }
-    } catch (error) {
-      console.error('Error adding income:', error);
-      setError('Failed to add income. Please try again.');
+      setFields({ date: '', description: '', amount: '' });
+      if (onIncomeAdded) onIncomeAdded();
+    } catch (error: any) {
+      setError(
+        error?.response?.data?.message ||
+          error?.message ||
+          'Failed to add income. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  // Define the fields to render in the form
+  const formFields: FieldConfig[] = [
+    {
+      name: 'date',
+      label: 'Date',
+      type: 'date',
+      value: fields.date,
+      onChange: handleFieldChange('date'),
+      required: true,
+    },
+    {
+      name: 'description',
+      label: 'Description',
+      type: 'text',
+      value: fields.description,
+      onChange: handleFieldChange('description'),
+      required: true,
+    },
+    {
+      name: 'amount',
+      label: 'Amount',
+      type: 'number',
+      value: fields.amount,
+      onChange: handleFieldChange('amount'),
+      required: true,
+      inputProps: { step: '0.01', min: '0' },
+    },
+  ];
+
   return (
-    <Paper sx={{ p: 3, mt: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Add Income
-      </Typography>
-      <form onSubmit={handleSubmit}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {/* Date picker field */}
-          <TextField
-            label="Date"
-            type="date"
-            value={date}
-            onChange={e => setDate(e.target.value)}
-            required
-            InputLabelProps={{ shrink: true }}
-          />
-
-          {/* Description input field */}
-          <TextField
-            label="Description"
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            required
-          />
-
-          {/* Amount input field with validation */}
-          <TextField
-            label="Amount"
-            type="number"
-            value={amount}
-            onChange={e => setAmount(e.target.value)}
-            required
-            inputProps={{ step: '0.01', min: '0' }}
-          />
-
-          {/* Error message display */}
-          {error && (
-            <Typography color="error" sx={{ mt: 1 }}>
-              {error}
-            </Typography>
-          )}
-
-          {/* Submit button with loading state */}
-          <Button type="submit" variant="contained" disabled={loading} sx={{ mt: 2 }}>
-            {loading ? 'Adding...' : 'Add Income'}
-          </Button>
-        </Box>
-      </form>
-    </Paper>
+    <GenericForm
+      fields={formFields}
+      onSubmit={handleSubmit}
+      loading={loading}
+      error={error}
+      title="Add Income"
+      submitLabel="Add Income"
+      paper
+    />
   );
 };
 

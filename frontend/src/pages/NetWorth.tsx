@@ -4,13 +4,13 @@ import {
   Typography,
   Box,
   Paper,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
 } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
 import { useDate } from '../context/DateContext';
 import {
   getAssets,
@@ -25,6 +25,9 @@ import {
 import type { Asset, Liability } from '../types/finance';
 import AssetForm from '../components/AssetForm';
 import LiabilityForm from '../components/LiabilityForm';
+import GenericList from '../components/common/GenericList';
+import AssetList from '../components/AssetList';
+import LiabilityList from '../components/LiabilityList';
 
 /**
  * NetWorthPage component.
@@ -46,6 +49,15 @@ const NetWorthPage: React.FC = () => {
 
   // Track if a net worth record exists for the month
   const [netWorthExists, setNetWorthExists] = useState(false);
+
+  // Edit state for assets
+  const [editAssetDialogOpen, setEditAssetDialogOpen] = useState(false);
+  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  const [editAssetFormData, setEditAssetFormData] = useState({ amount: '', comment: '' });
+  // Edit state for liabilities
+  const [editLiabilityDialogOpen, setEditLiabilityDialogOpen] = useState(false);
+  const [editingLiability, setEditingLiability] = useState<Liability | null>(null);
+  const [editLiabilityFormData, setEditLiabilityFormData] = useState({ amount: '', comment: '' });
 
   // Calculate totals
   const totalAssets = assets.reduce((sum, a) => sum + a.amount, 0);
@@ -174,129 +186,236 @@ const NetWorthPage: React.FC = () => {
     }
   };
 
+  // Asset edit handlers
+  const handleEditAsset = (asset: Asset) => {
+    setEditingAsset(asset);
+    setEditAssetFormData({ amount: asset.amount.toString(), comment: asset.comment });
+    setEditAssetDialogOpen(true);
+  };
+  const handleEditAssetDialogClose = () => {
+    setEditAssetDialogOpen(false);
+    setEditingAsset(null);
+    setEditAssetFormData({ amount: '', comment: '' });
+  };
+  const handleEditAssetSubmit = async () => {
+    if (!editingAsset) return;
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const updatedAsset = {
+        ...editingAsset,
+        amount: parseFloat(editAssetFormData.amount),
+        comment: editAssetFormData.comment,
+      };
+      await saveAsset({ ...updatedAsset, year, month: month + 1 });
+      const res = await getAssets(year, month + 1);
+      setAssets(res.data || []);
+      setSuccess('Asset updated successfully!');
+      handleEditAssetDialogClose();
+    } catch (e: any) {
+      setError(e?.response?.data?.message || e?.message || 'Failed to update asset.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Liability edit handlers
+  const handleEditLiability = (liability: Liability) => {
+    setEditingLiability(liability);
+    setEditLiabilityFormData({ amount: liability.amount.toString(), comment: liability.comment });
+    setEditLiabilityDialogOpen(true);
+  };
+  const handleEditLiabilityDialogClose = () => {
+    setEditLiabilityDialogOpen(false);
+    setEditingLiability(null);
+    setEditLiabilityFormData({ amount: '', comment: '' });
+  };
+  const handleEditLiabilitySubmit = async () => {
+    if (!editingLiability) return;
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const updatedLiability = {
+        ...editingLiability,
+        amount: parseFloat(editLiabilityFormData.amount),
+        comment: editLiabilityFormData.comment,
+      };
+      await saveLiability({ ...updatedLiability, year, month: month + 1 });
+      const res = await getLiabilities(year, month + 1);
+      setLiabilities(res.data || []);
+      setSuccess('Liability updated successfully!');
+      handleEditLiabilityDialogClose();
+    } catch (e: any) {
+      setError(e?.response?.data?.message || e?.message || 'Failed to update liability.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const monthName = new Date(year, month).toLocaleString('default', { month: 'long' });
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" gutterBottom color="text.primary">
           Net Worth in {monthName} {year}
         </Typography>
-        <Paper sx={{ p: 3, mt: 2 }}>
-          {/* Two columns: Assets and Liabilities */}
-          <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={4}>
-            {/* Assets Section */}
-            <Box flex={1}>
-              <Typography variant="h6">Assets</Typography>
-              {/* AssetForm lets you add a new asset */}
-              <AssetForm
-                onAdd={async ({ amount, comment }) => {
-                  setLoading(true);
-                  setError(null);
-                  setSuccess(null);
-                  try {
-                    await saveAsset({ year, month: month + 1, amount, comment });
-                    const res = await getAssets(year, month + 1);
-                    setAssets(res.data || []);
-                    setSuccess('Asset added successfully!');
-                  } catch (e: any) {
-                    setError(e?.response?.data?.message || e?.message || 'Failed to add asset.');
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                loading={loading}
-                error={error}
-              />
-              {/* List of assets */}
-              <List dense>
-                {assets.map(asset => (
-                  <ListItem
-                    key={asset.id}
-                    secondaryAction={
-                      <IconButton
-                        edge="end"
-                        aria-label="delete"
-                        onClick={() => handleDeleteAsset(asset.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    }
-                  >
-                    <ListItemText
-                      primary={`${currencyFormatter.format(asset.amount)} - ${asset.comment}`}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-              <Typography variant="subtitle1" sx={{ mt: 1, color: 'success.main' }}>
-                Total Assets: {currencyFormatter.format(totalAssets)}
-              </Typography>
-            </Box>
-            {/* Liabilities Section */}
-            <Box flex={1}>
-              <Typography variant="h6">Liabilities</Typography>
-              {/* LiabilityForm lets you add a new liability */}
-              <LiabilityForm
-                onAdd={async ({ amount, comment }) => {
-                  setLoading(true);
-                  setError(null);
-                  setSuccess(null);
-                  try {
-                    await saveLiability({ year, month: month + 1, amount, comment });
-                    const res = await getLiabilities(year, month + 1);
-                    setLiabilities(res.data || []);
-                    setSuccess('Liability added successfully!');
-                  } catch (e: any) {
-                    setError(
-                      e?.response?.data?.message || e?.message || 'Failed to add liability.'
-                    );
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                loading={loading}
-                error={error}
-              />
-              {/* List of liabilities */}
-              <List dense>
-                {liabilities.map(liability => (
-                  <ListItem
-                    key={liability.id}
-                    secondaryAction={
-                      <IconButton
-                        edge="end"
-                        aria-label="delete"
-                        onClick={() => handleDeleteLiability(liability.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    }
-                  >
-                    <ListItemText
-                      primary={`${currencyFormatter.format(liability.amount)} - ${liability.comment}`}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-              <Typography variant="subtitle1" sx={{ mt: 1, color: 'error.main' }}>
-                Total Liabilities: {currencyFormatter.format(totalLiabilities)}
-              </Typography>
-            </Box>
-          </Box>
-          <Divider sx={{ my: 3 }} />
-          {/* Show a message if no net worth record exists yet */}
+
+        {/* Forms Row */}
+        <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={4} mb={4}>
+          <Paper sx={{ p: 3, flex: 1 }} elevation={2}>
+            <Typography variant="h6" gutterBottom>
+              Add Asset
+            </Typography>
+            <AssetForm
+              onAdd={async ({ amount, comment }) => {
+                setLoading(true);
+                setError(null);
+                setSuccess(null);
+                try {
+                  await saveAsset({ year, month: month + 1, amount, comment });
+                  const res = await getAssets(year, month + 1);
+                  setAssets(res.data || []);
+                  setSuccess('Asset added successfully!');
+                } catch (e: any) {
+                  setError(e?.response?.data?.message || e?.message || 'Failed to add asset.');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              loading={loading}
+              error={error}
+            />
+          </Paper>
+          <Paper sx={{ p: 3, flex: 1 }} elevation={2}>
+            <Typography variant="h6" gutterBottom>
+              Add Liability
+            </Typography>
+            <LiabilityForm
+              onAdd={async ({ amount, comment }) => {
+                setLoading(true);
+                setError(null);
+                setSuccess(null);
+                try {
+                  await saveLiability({ year, month: month + 1, amount, comment });
+                  const res = await getLiabilities(year, month + 1);
+                  setLiabilities(res.data || []);
+                  setSuccess('Liability added successfully!');
+                } catch (e: any) {
+                  setError(e?.response?.data?.message || e?.message || 'Failed to add liability.');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              loading={loading}
+              error={error}
+            />
+          </Paper>
+        </Box>
+
+        {/* Lists Row */}
+        <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={4} mb={4}>
+          <Paper sx={{ p: 3, flex: 1 }} elevation={2}>
+            <AssetList
+              assets={assets}
+              loading={loading}
+              error={error}
+              onDelete={handleDeleteAsset}
+              onEdit={handleEditAsset}
+              total={totalAssets}
+              currencyFormatter={currencyFormatter}
+            />
+          </Paper>
+          <Paper sx={{ p: 3, flex: 1 }} elevation={2}>
+            <LiabilityList
+              liabilities={liabilities}
+              loading={loading}
+              error={error}
+              onDelete={handleDeleteLiability}
+              onEdit={handleEditLiability}
+              total={totalLiabilities}
+              currencyFormatter={currencyFormatter}
+            />
+          </Paper>
+        </Box>
+
+        {/* Net Worth Summary and Messages */}
+        <Paper sx={{ p: 3, mt: 2 }} elevation={2}>
           {!netWorthExists && (
             <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
               No net worth record for this month yet. Add an asset or liability to get started.
             </Typography>
           )}
-          {/* Show the calculated net worth */}
           <Typography variant="h6">Net Worth: {currencyFormatter.format(liveNetWorth)}</Typography>
-          {/* Show error or success messages */}
           {error && <Typography color="error">{error}</Typography>}
           {success && <Typography color="success.main">{success}</Typography>}
         </Paper>
+
+        {/* Asset Edit Dialog */}
+        <Dialog open={editAssetDialogOpen} onClose={handleEditAssetDialogClose}>
+          <DialogTitle>Edit Asset</DialogTitle>
+          <DialogContent>
+            <TextField
+              label="Amount"
+              type="number"
+              value={editAssetFormData.amount}
+              onChange={e => setEditAssetFormData({ ...editAssetFormData, amount: e.target.value })}
+              required
+              inputProps={{ step: '0.01', min: '0' }}
+              sx={{ mb: 2, mt: 1 }}
+              fullWidth
+            />
+            <TextField
+              label="Comment"
+              value={editAssetFormData.comment}
+              onChange={e =>
+                setEditAssetFormData({ ...editAssetFormData, comment: e.target.value })
+              }
+              fullWidth
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleEditAssetDialogClose}>Cancel</Button>
+            <Button onClick={handleEditAssetSubmit} variant="contained">
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Liability Edit Dialog */}
+        <Dialog open={editLiabilityDialogOpen} onClose={handleEditLiabilityDialogClose}>
+          <DialogTitle>Edit Liability</DialogTitle>
+          <DialogContent>
+            <TextField
+              label="Amount"
+              type="number"
+              value={editLiabilityFormData.amount}
+              onChange={e =>
+                setEditLiabilityFormData({ ...editLiabilityFormData, amount: e.target.value })
+              }
+              required
+              inputProps={{ step: '0.01', min: '0' }}
+              sx={{ mb: 2, mt: 1 }}
+              fullWidth
+            />
+            <TextField
+              label="Comment"
+              value={editLiabilityFormData.comment}
+              onChange={e =>
+                setEditLiabilityFormData({ ...editLiabilityFormData, comment: e.target.value })
+              }
+              fullWidth
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleEditLiabilityDialogClose}>Cancel</Button>
+            <Button onClick={handleEditLiabilitySubmit} variant="contained">
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </Container>
   );

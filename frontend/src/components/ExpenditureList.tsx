@@ -1,60 +1,30 @@
-/**
- * ExpenditureList Component
- *
- * This component displays a list of expenditure entries with the following features:
- * - Fetches and displays expenditure entries for the current month
- * - Shows total expenditure amount
- * - Allows editing of expenditure entries through a dialog
- * - Allows deletion of expenditure entries
- * - Handles loading states and error messages
- *
- * Component Structure:
- * 1. State Management:
- *    - expenditures: Array of expenditure entries
- *    - totalExpenditure: Total expenditure amount
- *    - loading: Loading state indicator
- *    - error: Error state for error handling
- *    - editDialogOpen: Controls edit dialog visibility
- *    - editingExpenditure: Currently edited expenditure entry
- *    - editFormData: Form data for editing (date, description, amount, category)
- *
- * 2. Main Functions:
- *    - fetchExpenditures: Fetches expenditure data from API
- *    - handleDelete: Handles expenditure deletion
- *    - handleEdit: Opens edit dialog
- *    - handleEditDialogClose: Closes edit dialog
- *    - handleEditSubmit: Handles form submission
- *
- * 3. UI Components:
- *    - List of expenditure entries
- *    - Edit dialog with form
- *    - Loading spinner
- *    - Error message
- *    - Total expenditure display
- */
-
 import React, { useEffect, useState } from 'react';
 import {
-  Paper,
-  Typography,
-  Box,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-  CircularProgress,
-  Alert,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
+  Box,
+  Button,
   MenuItem,
+  ListItemText,
 } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import GenericList from './common/GenericList';
 import api from '../api/financeApi';
 import type { Expenditure } from '../types/finance';
 import { Category } from '../types/category';
+
+/**
+ * ExpenditureList Component
+ *
+ * Displays a list of expenditure entries for a given month and year. Supports editing, deleting, filtering by category, and shows totals.
+ *
+ * Props:
+ * - refreshTrigger: (optional) Number that triggers a refresh when changed.
+ * - year: The selected year for which to display expenditures.
+ * - month: The selected month for which to display expenditures.
+ */
 
 interface ExpenditureListProps {
   refreshTrigger?: number;
@@ -89,9 +59,12 @@ const ExpenditureList: React.FC<ExpenditureListProps> = ({ refreshTrigger, year,
       ]);
       setExpenditures(expendituresRes.data);
       setTotalExpenditure(totalRes.data);
-    } catch (error) {
-      console.error('Error fetching expenditures:', error);
-      setError('Failed to load expenditures. Please try again.');
+    } catch (error: any) {
+      setError(
+        error?.response?.data?.message ||
+          error?.message ||
+          'Failed to load expenditures. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -105,9 +78,12 @@ const ExpenditureList: React.FC<ExpenditureListProps> = ({ refreshTrigger, year,
     try {
       await api.delete(`/expenditure/${id}`);
       await fetchExpenditures();
-    } catch (error) {
-      console.error('Error deleting expenditure:', error);
-      setError('Failed to delete expenditure. Please try again.');
+    } catch (error: any) {
+      setError(
+        error?.response?.data?.message ||
+          error?.message ||
+          'Failed to delete expenditure. Please try again.'
+      );
     }
   };
 
@@ -135,7 +111,6 @@ const ExpenditureList: React.FC<ExpenditureListProps> = ({ refreshTrigger, year,
 
   const handleEditSubmit = async () => {
     if (!editingExpenditure) return;
-
     try {
       const updatedExpenditure = {
         ...editingExpenditure,
@@ -144,13 +119,15 @@ const ExpenditureList: React.FC<ExpenditureListProps> = ({ refreshTrigger, year,
         amount: parseFloat(editFormData.amount),
         category: editFormData.category,
       };
-
       await api.put(`/expenditure/${editingExpenditure.id}`, updatedExpenditure);
       await fetchExpenditures();
       handleEditDialogClose();
-    } catch (error) {
-      console.error('Error updating expenditure:', error);
-      setError('Failed to update expenditure. Please try again.');
+    } catch (error: any) {
+      setError(
+        error?.response?.data?.message ||
+          error?.message ||
+          'Failed to update expenditure. Please try again.'
+      );
     }
   };
 
@@ -163,26 +140,10 @@ const ExpenditureList: React.FC<ExpenditureListProps> = ({ refreshTrigger, year,
   // Calculate total for filtered expenditures
   const filteredTotal = filteredExpenditures.reduce((sum, e) => sum + e.amount, 0);
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert severity="error" sx={{ mt: 2 }}>
-        {error}
-      </Alert>
-    );
-  }
-
   return (
     <>
       <Box mb={2} display="flex" alignItems="center" gap={2}>
-        <Typography variant="subtitle1">Filter by Category:</Typography>
+        <span>Filter by Category:</span>
         <TextField
           select
           size="small"
@@ -198,48 +159,23 @@ const ExpenditureList: React.FC<ExpenditureListProps> = ({ refreshTrigger, year,
           ))}
         </TextField>
       </Box>
-      <Paper sx={{ p: 3, mt: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          {`Expenses in ${monthName}`}
-        </Typography>
-        <List>
-          {filteredExpenditures.map(expenditure => (
-            <ListItem
-              key={expenditure.id}
-              secondaryAction={
-                <Box>
-                  <Button
-                    startIcon={<EditIcon />}
-                    onClick={() => handleEdit(expenditure)}
-                    sx={{ mr: 1 }}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    startIcon={<DeleteIcon />}
-                    color="error"
-                    onClick={() => handleDelete(expenditure.id)}
-                  >
-                    Delete
-                  </Button>
-                </Box>
-              }
-            >
-              <ListItemText
-                primary={`£${expenditure.amount.toFixed(2)} - ${expenditure.description}`}
-                secondary={`${expenditure.category}, ${expenditure.date}`}
-              />
-            </ListItem>
-          ))}
-        </List>
-        {totalExpenditure !== null && (
-          <Box sx={{ mt: 2, textAlign: 'right' }}>
-            <Typography variant="subtitle1">
-              Total: £{(filterCategory === 'ALL' ? totalExpenditure : filteredTotal).toFixed(2)}
-            </Typography>
-          </Box>
+      <GenericList<Expenditure>
+        title={`Expenses in ${monthName}`}
+        items={filteredExpenditures}
+        loading={loading}
+        error={error}
+        getKey={item => item.id ?? ''}
+        renderItem={expenditure => (
+          <ListItemText
+            primary={`£${expenditure.amount.toFixed(2)} - ${expenditure.description}`}
+            secondary={`${expenditure.category}, ${expenditure.date}`}
+          />
         )}
-      </Paper>
+        onEdit={handleEdit}
+        onDelete={expenditure => handleDelete(expenditure.id)}
+        totalLabel="Total"
+        totalValue={`£${(filterCategory === 'ALL' ? totalExpenditure : filteredTotal)?.toFixed(2)}`}
+      />
 
       <Dialog open={editDialogOpen} onClose={handleEditDialogClose}>
         <DialogTitle>Edit Expense</DialogTitle>

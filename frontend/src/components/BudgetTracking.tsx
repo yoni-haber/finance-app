@@ -1,27 +1,13 @@
 /**
  * BudgetTracking Component
  *
- * This component displays budget utilisation tracking with the following features:
- * - Fetches and displays budget tracking data for the current month
- * - Shows budget vs spent amounts for each category
- * - Visual progress bars for budget utilisation
- * - Handles loading states and error messages
+ * Displays a summary of budget usage for the current month, including:
+ * - Category-wise budget and spending
+ * - Progress bars for utilization
+ * - Loading and error states
  *
- * Component Structure:
- * 1. State Management:
- *    - trackingData: Array of budget tracking entries
- *    - loading: Loading state indicator
- *    - error: Error state for error handling
- *
- * 2. Main Functions:
- *    - fetchTrackingData: Fetches budget tracking data from API
- *    - formatAmount: Formats currency amounts with error handling
- *
- * 3. UI Components:
- *    - Progress bars for budget utilisation
- *    - Loading spinner
- *    - Error message
- *    - Empty state message
+ * Props:
+ *   - refreshKey (optional): triggers data reload when changed
  */
 
 import { useState, useEffect } from 'react';
@@ -34,14 +20,14 @@ interface BudgetTrackingProps {
 }
 
 const BudgetTracking = ({ refreshKey = 0 }: BudgetTrackingProps) => {
-  // State management for tracking data, loading state, and errors
+  // State: budget tracking data, loading, and error
   const [trackingData, setTrackingData] = useState<BudgetTrackingDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Fetch budget tracking data from the API
-   * Updates when refreshKey changes
+   * Fetch budget tracking data for the current month from the API.
+   * Called on mount and when refreshKey changes.
    */
   const fetchTrackingData = async () => {
     setLoading(true);
@@ -64,12 +50,12 @@ const BudgetTracking = ({ refreshKey = 0 }: BudgetTrackingProps) => {
     }
   };
 
-  // Fetch data when component mounts or refreshKey changes
+  // Fetch data on mount and when refreshKey changes
   useEffect(() => {
     fetchTrackingData();
   }, [refreshKey]);
 
-  // Show loading spinner while data is being fetched
+  // Show loading spinner while fetching
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
@@ -78,7 +64,7 @@ const BudgetTracking = ({ refreshKey = 0 }: BudgetTrackingProps) => {
     );
   }
 
-  // Show error message if data fetch fails
+  // Show error message if fetch fails
   if (error) {
     return (
       <Alert severity="error" sx={{ mt: 2 }}>
@@ -87,7 +73,7 @@ const BudgetTracking = ({ refreshKey = 0 }: BudgetTrackingProps) => {
     );
   }
 
-  // Show message if no tracking data is available
+  // Show message if no data
   if (trackingData.length === 0) {
     return (
       <Paper sx={{ p: 3, mt: 2 }}>
@@ -102,9 +88,7 @@ const BudgetTracking = ({ refreshKey = 0 }: BudgetTrackingProps) => {
   }
 
   /**
-   * Format currency amounts with error handling
-   * @param amount - The amount to format
-   * @returns Formatted amount string with 2 decimal places
+   * Format a currency string to two decimals, fallback to 0.00 if invalid.
    */
   const formatAmount = (amount: string) => {
     try {
@@ -125,51 +109,49 @@ const BudgetTracking = ({ refreshKey = 0 }: BudgetTrackingProps) => {
       <Typography variant="h6" gutterBottom>
         Budget Tracking
       </Typography>
-      {trackingData.map(tracking => {
-        console.log('Rendering tracking item:', tracking); // Debug log
-        return (
-          <Box key={tracking.category} sx={{ mb: 2 }}>
-            {/* Category name */}
-            <Typography variant="subtitle1">{tracking.category}</Typography>
+      {/* Render each category's budget tracking info */}
+      {trackingData.map(tracking => (
+        <Box key={tracking.category} sx={{ mb: 2 }}>
+          {/* Category name */}
+          <Typography variant="subtitle1">{tracking.category}</Typography>
 
-            {/* Budget and spent amounts */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="body2" color="text.secondary">
-                Budget: £{formatAmount(tracking.budget)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Spent: £{formatAmount(tracking.spent)}
-              </Typography>
-            </Box>
-
-            {/* Progress bar container */}
-            <Box
-              sx={{
-                width: '100%',
-                height: 8,
-                bgcolor: 'grey.200',
-                borderRadius: 1,
-                overflow: 'hidden',
-              }}
-            >
-              {/* Progress bar - changes color when over budget */}
-              <Box
-                sx={{
-                  width: `${tracking.percentageUsed}%`,
-                  height: '100%',
-                  bgcolor: tracking.percentageUsed > 100 ? 'error.main' : 'primary.main',
-                  transition: 'width 0.3s ease-in-out',
-                }}
-              />
-            </Box>
-
-            {/* Percentage used indicator */}
-            <Typography variant="caption" color="text.secondary">
-              {tracking.percentageUsed.toFixed(1)}% used
+          {/* Budget and spent amounts */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Budget: £{formatAmount(tracking.budget)}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Spent: £{formatAmount(tracking.spent)}
             </Typography>
           </Box>
-        );
-      })}
+
+          {/* Progress bar for utilization */}
+          <Box
+            sx={{
+              width: '100%',
+              height: 8,
+              bgcolor: 'grey.200',
+              borderRadius: 1,
+              overflow: 'hidden',
+            }}
+          >
+            {/* Bar color is red if over budget, blue otherwise */}
+            <Box
+              sx={{
+                width: `${tracking.percentageUsed}%`,
+                height: '100%',
+                bgcolor: tracking.percentageUsed > 100 ? 'error.main' : 'primary.main',
+                transition: 'width 0.3s ease-in-out',
+              }}
+            />
+          </Box>
+
+          {/* Percentage used */}
+          <Typography variant="caption" color="text.secondary">
+            {tracking.percentageUsed.toFixed(1)}% used
+          </Typography>
+        </Box>
+      ))}
     </Paper>
   );
 };

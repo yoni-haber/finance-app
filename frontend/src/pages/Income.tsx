@@ -1,16 +1,14 @@
 import { useState } from 'react';
+import { useDate } from '../context/DateContext';
 import { Container, Typography, Box, Paper, Divider } from '@mui/material';
 import IncomeForm from '../components/IncomeForm';
 import IncomeList from '../components/IncomeList';
-import { useDate } from '../context/DateContext';
 
 const Income = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const { year, month } = useDate();
 
-  const handleIncomeAdded = () => {
-    setRefreshKey(prev => prev + 1);
-  };
+  const handleIncomeAdded = () => setRefreshKey(prev => prev + 1);
 
   return (
     <Container maxWidth="lg">
